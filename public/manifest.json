@@ -1,0 +1,15 @@
+{
+  "name": "KWL-NEXUS Store",
+  "short_name": "KWL-NEXUS",
+  "description": "Discover, download, and deploy useful apps.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f7fb",
+  "theme_color": "#6C63FF",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/branding/app-icons/kwl-nexus-app-icon-rounded.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/branding/favicons/kwl-nexus-favicon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/branding/favicons/kwl-nexus-favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

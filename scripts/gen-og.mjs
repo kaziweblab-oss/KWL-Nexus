@@ -1,0 +1,5 @@
+import sharp from 'sharp';
+const svg = `<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6C63FF"/><stop offset="100%" stop-color="#00D4FF"/></linearGradient></defs><rect width="1200" height="630" fill="url(#g)"/><g transform="translate(450,150)"><rect x="0" y="0" width="300" height="300" rx="60" fill="white" opacity="0.95"/><g transform="translate(75,75)"><path d="M 18 10 L 36 10 L 24 42 L 51 10 L 71 10 L 34 53 L 71 90 L 50 90 L 28 60 L 36 90 L 54 90 L 66 78 L 52 78 L 18 10 Z" fill="url(#g)" transform="scale(1.6)"/></g></g><text x="600" y="520" font-family="Inter, sans-serif" font-size="46" font-weight="800" fill="white" text-anchor="middle">KWL-NEXUS</text><text x="600" y="550" font-family="Inter, sans-serif" font-size="16" font-weight="600" fill="rgba(255,255,255,0.85)" text-anchor="middle">WHERE INNOVATION MEETS CONNECTION</text></svg>`;
+await sharp(Buffer.from(svg)).png().toFile('public/og-image.png');
+await sharp(Buffer.from(svg)).resize(1200,630).png().toFile('public/brand/og-1200x630.png');
+console.log('og done');

@@ -1,0 +1,266 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f6f7fb;
+  --foreground: #17172b;
+  --paper: #f6f7fb;
+  --font-sans: "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
+  --brand-primary: #6C63FF;
+  --brand-secondary: #00D4FF;
+  --brand-ink: #17172B;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-sans);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dark {
+  --background: #0f0f1e;
+  --foreground: #f5f5ff;
+  --paper: #1a1a2e;
+  color-scheme: dark;
+}
+
+.dark body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #1d223d;
+  color: #f5f5ff;
+}
+
+textarea {
+  resize: none !important;
+}
+
+.dark .bg-white {
+  background-color: #1d1d34;
+}
+
+.dark .text-ink {
+  color: #f5f5ff;
+}
+
+.profile-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.profile-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #46436f transparent;
+}
+
+.profile-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.profile-scrollbar::-webkit-scrollbar-thumb {
+  min-height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(139, 124, 255, 0.22), rgba(79, 70, 229, 0.22));
+  box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.16), 0 1px 4px rgba(79, 70, 229, 0.08);
+  transition: filter 160ms ease, background 160ms ease;
+}
+
+.profile-scrollbar::-webkit-scrollbar-thumb:hover {
+  filter: brightness(2.2);
+}
+
+.profile-scrollbar::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.dark .profile-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(103, 232, 249, 0.22), rgba(8, 145, 178, 0.22));
+  box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.16), 0 1px 4px rgba(0, 212, 255, 0.08);
+}
+
+.dark .profile-scrollbar {
+  scrollbar-color: #17464d transparent;
+}
+
+/* Light theme ensures footer/admin sidebar हल्का gray visible */
+/* Paper uses CSS variable so dark mode switches correctly — fixes admin roster thead white-on-dark bug */
+.bg-paper {
+  background-color: var(--paper);
+}
+
+/* Smooth transitions and animations */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Hover effects */
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-2 hover:shadow-lg;
+  }
+
+  .hover-glow {
+    @apply transition-all duration-300 hover:shadow-lg hover:shadow-primary/40 dark:hover:shadow-secondary/40;
+  }
+
+  /* Smooth scroll */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Gradient animations */
+  @keyframes gradient-shift {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease infinite;
+  }
+
+  /* Pulse animation */
+  @keyframes soft-pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  .animate-soft-pulse {
+    animation: soft-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Infinite marquee - right to left */
+  @keyframes marquee {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  .animate-marquee {
+    animation: marquee 25s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-marquee {
+      animation: none;
+    }
+  }
+
+  /* Premium Nexus Loader - CONNECT • PULSE • RECONNECT (Video Ref Complete) */
+  /* Video ref: 0-4.33s HOLD front (frame_01-14), 4.66s Y-break, 5.0-5.66s O-split gap widen -> cut. Complete adds RECONNECT+LOCK */
+  @keyframes nexus-loop {
+    0% { transform: translateX(0) translateY(0) rotate(0) scale(1); filter: drop-shadow(0 8px 24px rgba(108,99,255,0.15)); }
+    12% { transform: translateX(-7px) translateY(-3px) rotate(6deg) scale(0.99); }
+    24% { transform: translateX(7px) translateY(-3px) rotate(-6deg) scale(0.99); }
+    36% { transform: translateX(-4px) translateY(-2px) rotate(4deg) scale(1); }
+    48% { transform: translateX(4px) translateY(-2px) rotate(-4deg) scale(1); }
+    60% { transform: translateX(0) translateY(0) rotate(0) scale(1); }
+    72% { transform: scale(0.98); filter: drop-shadow(0 8px 32px rgba(0,212,255,0.25)); }
+    84% { transform: scale(1.02); filter: drop-shadow(0 12px 36px rgba(108,99,255,0.35)); }
+    100% { transform: scale(1); filter: drop-shadow(0 8px 24px rgba(108,99,255,0.15)); }
+  }
+
+  .animate-nexus-loop {
+    animation: nexus-loop 2.5s cubic-bezier(0.33, 1, 0.68, 1) infinite;
+    transform-origin: center;
+  }
+
+  /* Fullscreen split: left (purple) -> BREAK + MOVE */
+  @keyframes nexus-left {
+    0% { transform: translateX(0) translateY(0) rotate(0) scale(1); }
+    8% { transform: translateX(0) translateY(0) rotate(0) scale(1); }
+    18% { transform: translateX(-5px) translateY(-2px) rotate(4deg) scale(0.99); }
+    30% { transform: translateX(-11px) translateY(-3px) rotate(7deg) scale(0.99); }
+    45% { transform: translateX(-9px) translateY(-2px) rotate(6deg) scale(1); }
+    62% { transform: translateX(0) translateY(0) rotate(0) scale(1); }
+    74% { transform: translateX(0) translateY(0) rotate(0) scale(0.98); }
+    86% { transform: translateX(0) translateY(0) rotate(0) scale(1.02); }
+    100% { transform: translateX(0) translateY(0) rotate(0) scale(1); }
+  }
+
+  /* Fullscreen split: right (cyan) -> BREAK + MOVE opposite */
+  @keyframes nexus-right {
+    0% { transform: translateX(0) translateY(0) rotate(0) scale(1); }
+    8% { transform: translateX(0) translateY(0) rotate(0) scale(1); }
+    18% { transform: translateX(5px) translateY(-2px) rotate(-4deg) scale(0.99); }
+    30% { transform: translateX(11px) translateY(-3px) rotate(-7deg) scale(0.99); }
+    45% { transform: translateX(9px) translateY(-2px) rotate(-6deg) scale(1); }
+    62% { transform: translateX(0) translateY(0) rotate(0) scale(1); }
+    74% { transform: translateX(0) translateY(0) rotate(0) scale(0.98); }
+    86% { transform: translateX(0) translateY(0) rotate(0) scale(1.02); }
+    100% { transform: translateX(0) translateY(0) rotate(0) scale(1); }
+  }
+
+  .animate-nexus-left {
+    animation: nexus-left 3s cubic-bezier(0.33, 1, 0.68, 1) infinite;
+    transform-origin: center;
+  }
+
+  .animate-nexus-right {
+    animation: nexus-right 3s cubic-bezier(0.33, 1, 0.68, 1) infinite;
+    transform-origin: center;
+  }
+
+  @keyframes nexus-pulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 0.9; transform: scale(1.06); }
+  }
+  .animate-nexus-pulse {
+    animation: nexus-pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes nexus-dot {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    65% { opacity: 0; }
+    74% { transform: translate(-50%, -50%) scale(0); opacity: 0.95; }
+    86% { transform: translate(-50%, -50%) scale(4); opacity: 0; }
+    100% { opacity: 0; }
+  }
+  .animate-nexus-dot {
+    animation: nexus-dot 3s cubic-bezier(0.33, 1, 0.68, 1) infinite;
+  }
+
+  @keyframes nexus-text {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.9; }
+  }
+  .animate-nexus-text {
+    animation: nexus-text 3s ease-in-out infinite;
+  }
+
+  @keyframes nexus-spinner {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .animate-nexus-spinner {
+    animation: nexus-spinner 2.2s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-nexus-loop, .animate-nexus-left, .animate-nexus-right, .animate-nexus-pulse, .animate-nexus-dot, .animate-nexus-text, .animate-nexus-spinner {
+      animation: none;
+    }
+  }
+}

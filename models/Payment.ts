@@ -1,0 +1,24 @@
+import { Schema, model, models } from "mongoose";
+
+const PaymentSchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    subscriptionId: { type: Schema.Types.ObjectId, ref: "Subscription" },
+    planId: { type: Schema.Types.ObjectId, ref: "Plan" },
+    appId: { type: String, trim: true, index: true },
+    amount: { type: Number, required: true, min: 0 },
+    currency: { type: String, default: "USD", uppercase: true },
+    status: { type: String, enum: ["pending", "succeeded", "failed", "refunded"], default: "pending" },
+    transactionId: { type: String, trim: true, index: true },
+    paymentMethod: { type: String, trim: true, lowercase: true, default: "other" },
+    verifiedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    verifiedAt: Date,
+    notes: { type: String, trim: true },
+    deadline: Date,
+    providerPaymentId: String,
+    paidAt: Date,
+  },
+  { timestamps: true },
+);
+
+export default models.Payment || model("Payment", PaymentSchema);
