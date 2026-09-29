@@ -16,7 +16,7 @@ test("pdf guide is a valid multi-page document", async () => {
   // xref offsets are BYTE offsets — verify against raw bytes.
   const xrefAt = Number(/startxref\n(\d+)/.exec(text)?.[1]);
   expect(buf.slice(xrefAt, xrefAt + 4).toString()).toBe("xref");
-  for (const m of text.matchAll(/(\d{10}) 00000 n /g)) {
+  for (const m of Array.from(text.matchAll(/(\d{10}) 00000 n /g))) {
     const off = Number(m[1]);
     if (off === 0) continue;
     expect(buf.slice(off, off + 20).toString()).toMatch(/^\d+ 0 obj/);
