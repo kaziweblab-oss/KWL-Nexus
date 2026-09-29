@@ -18,6 +18,7 @@ Tip: add `kwl-config.json` (`name, description, category, iconUrl, websiteUrl`) 
 ## 3. Details, Features, Media
 - **Details**: name, description, category, pricing, website, icon.
 - **Features**: one per line. Shown on the store page AND offered as per-plan toggles in Pricing.
+  Desktop apps can also push their own list to `POST /api/apps/<id>/features` (x-api-key, replace wins last).
 - **Preview & Screenshots**: shown in store carousel; empty → honest placeholder (users) / dashed hint (admins).
 
 ## 4. Tutorial (App editor → Tutorial)

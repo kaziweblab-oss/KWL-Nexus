@@ -6,6 +6,8 @@ export const apiEndpoints = [
   { method: "GET", path: "/api/apps/new-releases", description: "List latest new releases." },
   { method: "GET", path: "/api/public/apps", description: "Public app directory (no auth)." },
   { method: "GET", path: "/api/apps/[id]/tutorial", description: "Get tutorial for an app." },
+  { method: "GET", path: "/api/apps/[id]/features", description: "Get the app master feature list." },
+  { method: "POST", path: "/api/apps/[id]/features", description: "Replace the app master feature list (desktop sync)." },
   { method: "GET", path: "/api/payment/methods", description: "List active payment methods (filtered HEALTHY)." },
   { method: "POST", path: "/api/payment/request", description: "Create a pending payment request." },
   { method: "GET", path: "/api/payment/status/[id]", description: "Read the authenticated payment status." },

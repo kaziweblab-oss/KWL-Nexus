@@ -189,7 +189,7 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
 
       <div className="mt-10">
         <h2 className="mb-5 text-2xl font-bold text-ink dark:text-white">Features</h2>
-        <p className="mb-4 text-sm text-ink/60 dark:text-white/60">One feature per line. Shown on the store page and available as toggles in Pricing plans.</p>
+        <p className="mb-4 text-sm text-ink/60 dark:text-white/60">One feature per line. Shown on the store page and available as toggles in Pricing plans. Desktop app sync overwrites this list on next update (last-write-wins).</p>
         <form onSubmit={(e) => void saveFeatures(e)} className="rounded-2xl border border-ink/10 bg-white p-6 dark:border-white/10 dark:bg-[#1a1a2e]">
           <textarea value={featuresText} onChange={(e) => setFeaturesText(e.target.value)} rows={6} placeholder={"Fast 4K downloads\nNo ads or trackers\nBatch queue with resume"} className="min-h-[140px] w-full resize-y rounded-xl border border-ink/10 bg-paper p-4 text-sm leading-6 text-ink outline-none dark:border-white/10 dark:bg-white/5 dark:text-white" />
           <button disabled={saving} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"><Save size={15} /> {saving ? "Saving…" : "Save features"}</button>
