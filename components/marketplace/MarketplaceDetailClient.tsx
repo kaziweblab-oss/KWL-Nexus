@@ -27,7 +27,7 @@ export function MarketplaceDetailClient({
   previewVideoUrl,
   reviewCount,
 }: {
-  app: { id: string; name: string; category: string; icon: string; accent: string; rating: string; downloads: string; description: string; longDescription: string; platforms: string[]; downloadUrls?: { android?: string; windows?: string; linux?: string }; updatedAt?: string; size?: string; developer?: string; features?: string[]; versions?: { version: string; tag?: string; urls?: { android?: string; windows?: string; linux?: string }; date: string; notes: string }[] };
+  app: { id: string; name: string; category: string; icon: string; iconUrl?: string | null; accent: string; rating: string; downloads: string; description: string; longDescription: string; platforms: string[]; downloadUrls?: { android?: string; windows?: string; linux?: string }; updatedAt?: string; size?: string; developer?: string; features?: string[]; versions?: { version: string; tag?: string; urls?: { android?: string; windows?: string; linux?: string }; date: string; notes: string }[] };
   plans: Plan[];
   screenshots: string[];
   previewImageUrl?: string;
@@ -124,8 +124,13 @@ export function MarketplaceDetailClient({
           {/* Left: App info */}
           <div>
             <div className="flex gap-4">
-              <div className="grid h-20 w-20 place-items-center rounded-2xl text-3xl text-white shadow-xl shrink-0" style={{ backgroundColor: app.accent }}>
-                {app.icon}
+              <div className="grid h-20 w-20 place-items-center overflow-hidden rounded-2xl text-3xl text-white shadow-xl shrink-0" style={{ backgroundColor: app.accent }}>
+                {app.iconUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={app.iconUrl} alt={`${app.name} logo`} className="h-full w-full object-cover" />
+                ) : (
+                  app.icon
+                )}
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">

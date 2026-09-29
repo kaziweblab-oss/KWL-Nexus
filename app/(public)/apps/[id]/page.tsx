@@ -108,6 +108,7 @@ export default async function AppDetailPage({ params }: { params: { id: string }
           name: dbApp.name,
           category: dbApp.category,
           icon: dbApp.name.slice(0, 1).toUpperCase(),
+          iconUrl: dbApp.iconUrl || null,
           accent: "#6C63FF",
           rating,
           downloads: String(dbApp.downloadCount ?? 0),
