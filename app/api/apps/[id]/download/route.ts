@@ -31,6 +31,15 @@ export async function GET(request: Request, { params }: { params: { id: string }
   const owner = appDoc.githubOwner;
   const repo = appDoc.githubRepo;
 
+  // Real download counter for popular ranking (non-blocking).
+  async function bumpCount() {
+    try {
+      const idStr = String((appDoc._id as { toString(): string }).toString());
+      if (mongoose.Types.ObjectId.isValid(idStr)) await App.findByIdAndUpdate(appDoc._id, { $inc: { downloadCount: 1 } }).exec();
+      else if (appDoc.slug) await App.findOneAndUpdate({ slug: appDoc.slug }, { $inc: { downloadCount: 1 } }).exec();
+    } catch {}
+  }
+
   // If app has GitHub repo linked, try to generate private release asset URL via PAT
   if (owner && repo) {
     try {
@@ -39,10 +48,23 @@ export async function GET(request: Request, { params }: { params: { id: string }
       // Fetch latest release or specific tag
       const path = tag ? `/repos/${owner}/${repo}/releases/tags/${tag}` : `/repos/${owner}/${repo}/releases/latest`;
       const release = await githubFetch<{ tag_name: string; assets: { name: string; browser_download_url: string }[] }>(path, token ?? "");
+      const pickForPlatform = (plat: string | null) => {
+        if (!plat) return null;
+        const ext = plat.toLowerCase() === "android" ? ".apk" : plat.toLowerCase() === "windows" ? [".exe", ".msi"] : plat.toLowerCase() === "linux" ? [".deb", ".appimage"] : null;
+        if (!ext) return null;
+        const exts = Array.isArray(ext) ? ext : [ext];
+        return release.assets.find((x) => exts.some((e) => x.name.toLowerCase().endsWith(e)))?.browser_download_url ?? null;
+      };
       let downloadUrl: string | null = null;
       if (asset) {
         const a = release.assets.find((x) => x.name === asset);
         downloadUrl = a?.browser_download_url ?? null;
+      } else if (platform) {
+        // Tag + platform combo (old-version downloads): prefer platform asset, error if missing.
+        downloadUrl = pickForPlatform(platform);
+        if (!downloadUrl) {
+          return NextResponse.json({ error: `No ${platform} build in ${release.tag_name}.` }, { status: 404 });
+        }
       } else {
         // Prefer apk/exe/deb matching platform, fallback to first asset
         downloadUrl = release.assets[0]?.browser_download_url ?? null;
@@ -54,6 +76,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
         // To make auto-download work for private, we proxy via server:
         // Return our proxy URL: /api/github/repos/[owner]/[repo]/releases/asset?url=...
         // For now, return direct GitHub URL with token hint
+        await bumpCount();
         return NextResponse.json({
           downloadUrl,
           version: release.tag_name,
@@ -74,12 +97,16 @@ export async function GET(request: Request, { params }: { params: { id: string }
   if (platform && stored) {
     const key = platform.toLowerCase() as keyof NonNullable<typeof stored>;
     if (["android", "windows", "linux"].includes(key) && stored[key]) {
+      await bumpCount();
       return NextResponse.json({ downloadUrl: stored[key], version: (app as unknown as { latestVersion?: string }).latestVersion ?? "1.0.0", platform: key });
     }
     return NextResponse.json({ error: `No ${platform} build published for this app yet.` }, { status: 404 });
   }
   const fallback = stored?.android ?? stored?.windows ?? stored?.linux;
-  if (fallback) return NextResponse.json({ downloadUrl: fallback, version: (app as unknown as { latestVersion: string }).latestVersion ?? "1.0.0" });
+  if (fallback) {
+    await bumpCount();
+    return NextResponse.json({ downloadUrl: fallback, version: (app as unknown as { latestVersion: string }).latestVersion ?? "1.0.0" });
+  }
 
   return NextResponse.json({ error: "No downloadable release found. Publish a release with assets." }, { status: 404 });
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { BadgeCheck, Star, Download, ShieldCheck, Monitor, Smartphone, Terminal, ChevronLeft, ChevronRight, Check, X, Crown, Sparkles, Zap, Image as ImageIcon, ArrowRight } from "lucide-react";
+import { BadgeCheck, Star, Download, ShieldCheck, Monitor, ChevronLeft, ChevronRight, ChevronDown, Check, X, Crown, Sparkles, Zap, Image as ImageIcon, ArrowRight } from "lucide-react";
 import { useSession, signIn } from "next-auth/react";
 import { useLanguage } from "@/components/shared/LanguageProvider";
 import { useToast } from "@/components/ui/Toast";
@@ -26,7 +26,7 @@ export function MarketplaceDetailClient({
   previewVideoUrl,
   reviewCount,
 }: {
-  app: { id: string; name: string; category: string; icon: string; accent: string; rating: string; downloads: string; description: string; longDescription: string; platforms: string[]; downloadUrls?: { android?: string; windows?: string; linux?: string }; updatedAt?: string; size?: string; developer?: string; features?: string[]; versions?: { version: string; date: string; notes: string }[] };
+  app: { id: string; name: string; category: string; icon: string; accent: string; rating: string; downloads: string; description: string; longDescription: string; platforms: string[]; downloadUrls?: { android?: string; windows?: string; linux?: string }; updatedAt?: string; size?: string; developer?: string; features?: string[]; versions?: { version: string; tag?: string; urls?: { android?: string; windows?: string; linux?: string }; date: string; notes: string }[] };
   plans: Plan[];
   screenshots: string[];
   previewImageUrl?: string;
@@ -54,19 +54,54 @@ export function MarketplaceDetailClient({
     { key: "Reviews", label: copy.reviewsTab, badge: String(reviewCount ?? 0) },
     { key: "FAQ", label: copy.faq },
   ];
-  const platformIcons: Record<string, typeof Monitor> = { Windows: Monitor, macOS: Monitor, Android: Smartphone, Linux: Terminal, iOS: Smartphone };
+
   const { data: session, status } = useSession();
   const isAdmin = Boolean((session?.user as { isAdmin?: boolean } | undefined)?.isAdmin);
   const { showToast } = useToast();
-  const handleDownload = (platform?: string) => {
+  const [dlPlatform, setDlPlatform] = useState("");
+  const [downloading, setDownloading] = useState(false);
+
+  // Auto-detect the visitor's platform; they can change it in the select.
+  useEffect(() => {
+    try {
+      const src = ((navigator as unknown as { userAgentData?: { platform?: string } }).userAgentData?.platform ?? navigator.userAgent ?? "").toLowerCase();
+      const guess = src.includes("android") ? "Android" : src.includes("linux") ? "Linux" : "Windows";
+      if (app.platforms.includes(guess)) setDlPlatform(guess);
+      else setDlPlatform(app.platforms[0] ?? "");
+    } catch {
+      setDlPlatform(app.platforms[0] ?? "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleDownload = async (platform?: string, tag?: string) => {
     if (status !== "authenticated") {
       showToast(copy.secureLogin, "warning");
       signIn("google");
       return;
     }
-    // trigger download via API or show toast
     showToast(copy.downloadStarted, "info");
-    window.location.assign(`/api/apps/${app.id}/download${platform ? `?platform=${platform.toLowerCase()}` : ""}`);
+    setDownloading(true);
+    try {
+      const q = new URLSearchParams();
+      if (platform) q.set("platform", platform.toLowerCase());
+      if (tag) q.set("tag", tag);
+      const qs = q.toString();
+      const res = await fetch(`/api/apps/${app.id}/download${qs ? `?${qs}` : ""}`, { cache: "no-store" });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error ?? "Download unavailable");
+      const a = document.createElement("a");
+      a.href = j.downloadUrl;
+      a.target = "_blank";
+      a.rel = "noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "Download unavailable", "error");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -109,27 +144,60 @@ export function MarketplaceDetailClient({
               </div>
             </div>
             <p className="mt-4 text-sm leading-6 text-ink/60 dark:text-white/60">{app.description} Your intelligent productivity companion for everyday tasks. Chat with AI, summarize content, translate, generate ideas, manage notes and more — all in one powerful assistant.</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {(["Windows", "Android", "Linux"] as const).map((p) => {
-                const Icon = platformIcons[p] ?? Monitor;
-                const available = app.platforms.includes(p);
-                const title = available ? `Download for ${p}` : `${p} build not published yet`;
-                return (
+            <div className="mt-4 space-y-3">
+              {app.platforms.length > 0 ? (
+                <>
+                  <label className="block text-xs font-semibold text-ink/60 dark:text-white/60">
+                    Platform
+                    <span className="relative mt-1.5 block">
+                      <select
+                        value={dlPlatform}
+                        onChange={(e) => setDlPlatform(e.target.value)}
+                        className="h-11 w-full appearance-none rounded-xl border border-ink/10 bg-white pl-10 pr-9 text-sm font-semibold text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                      >
+                        {app.platforms.map((p) => (
+                          <option key={p} value={p} className="bg-white text-ink dark:bg-[#1a1a2e] dark:text-white">{p}</option>
+                        ))}
+                      </select>
+                      <Monitor size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/40 dark:text-white/40" />
+                      <ChevronDown size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink/40 dark:text-white/40" />
+                    </span>
+                  </label>
                   <button
-                    key={p}
-                    type="button"
-                    title={title}
-                    aria-label={title}
-                    disabled={!available}
-                    onClick={() => handleDownload(p)}
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition hover:scale-105 ${available ? "border-ink/10 bg-white text-ink/70 dark:border-white/10 dark:bg-white/5 dark:text-white/70 hover:bg-paper dark:hover:bg-white/10" : "cursor-not-allowed border-ink/5 bg-white/50 text-ink/30 dark:border-white/5 dark:bg-white/[0.03] dark:text-white/30"}`}
+                    onClick={() => void handleDownload(dlPlatform)}
+                    disabled={!dlPlatform || downloading}
+                    className="btn-shine inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-white shadow-lg shadow-primary/25 transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <Icon size={13} /> {p}
+                    <Download size={15} /> {downloading ? copy.downloadStarted : `${copy.downloadNow}${app.versions?.[0]?.version ? ` v${app.versions[0].version}` : ""}`}
                   </button>
-                );
-              })}
+                </>
+              ) : (
+                <p className="rounded-xl border border-dashed border-ink/15 px-4 py-5 text-center text-xs text-ink/50 dark:border-white/10 dark:text-white/40">No builds published for any platform yet.</p>
+              )}
+              {(app.versions ?? []).length > 1 && (
+                <div className="rounded-xl border border-ink/10 bg-paper/60 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-ink/45 dark:text-white/40">Older versions</p>
+                  <div className="mt-2 space-y-2">
+                    {(app.versions ?? []).slice(1).map((v) => (
+                      <div key={v.version} className="flex items-center gap-2 rounded-lg bg-white px-2.5 py-2 dark:bg-white/5">
+                        <button
+                          onClick={() => void handleDownload(dlPlatform || app.platforms[0], v.tag || v.version)}
+                          disabled={downloading}
+                          title={`Download v${v.version}`}
+                          className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-white transition hover:bg-primary/90 disabled:opacity-50"
+                        >
+                          <Download size={13} />
+                        </button>
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-bold text-ink dark:text-white">v{v.version}</p>
+                          {v.date ? <p className="truncate text-[10px] text-ink/45 dark:text-white/40">{v.date}</p> : null}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-            {app.platforms.length > 0 && <p className="mt-2 text-[11px] text-ink/40 dark:text-white/30">Tap a highlighted platform to download its build.</p>}
           </div>
 
           {/* Center: Preview - static single, admin editable (image or video) */}

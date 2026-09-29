@@ -35,6 +35,16 @@ const updateSchema = z.object({
   isNewRelease: z.boolean().optional(),
   features: z.array(z.string().min(1).max(160)).max(50).optional(),
   size: z.string().max(20).optional().or(z.literal("")),
+  // Release snapshot for old-version downloads (stored on AppVersion).
+  tag: z.string().max(60).optional(),
+  urls: z
+    .object({
+      android: z.string().max(4000).optional().or(z.literal("")),
+      windows: z.string().max(4000).optional().or(z.literal("")),
+      linux: z.string().max(4000).optional().or(z.literal("")),
+    })
+    .partial()
+    .optional(),
 });
 
 export async function GET(_request: Request, { params }: { params: { id: string } }) {
@@ -80,7 +90,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     try {
       await AppVersion.updateMany({ appId: app._id.toString(), isCurrent: true }, { isCurrent: false });
       if (data.latestVersion) {
-        await AppVersion.create({ appId: app._id.toString(), version: data.latestVersion, notes: "Set from release", changedBy: email, isCurrent: true });
+        const urls = data.urls ? Object.fromEntries(Object.entries(data.urls).filter(([, v]) => v)) : undefined;
+        await AppVersion.create({ appId: app._id.toString(), version: data.latestVersion, tag: data.tag || undefined, urls, notes: "Set from release", changedBy: email, isCurrent: true });
       }
     } catch {}
   }

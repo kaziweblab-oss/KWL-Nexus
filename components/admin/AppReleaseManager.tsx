@@ -53,13 +53,12 @@ export function AppReleaseManager({ owner, repo, appSlug, currentVersion, onAppl
     try {
       const urls = pickUrls(rel.assets);
       const version = rel.tag.replace(/^v/i, "");
-      // Combined size of the mapped installers (largest asset wins if none mapped).
       const mappedBytes = [urls.android && rel.assets.find((a) => a.url === urls.android)?.size, urls.windows && rel.assets.find((a) => a.url === urls.windows)?.size, urls.linux && rel.assets.find((a) => a.url === urls.linux)?.size].filter((n): n is number => typeof n === "number" && n > 0);
       const biggest = Math.max(mappedBytes.length ? Math.max(...mappedBytes) : 0, ...rel.assets.map((a) => a.size ?? 0));
       const res = await fetch(`/api/admin/apps/${encodeURIComponent(appSlug)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ latestVersion: version, downloadUrl: urls, size: biggest > 0 ? fmtSize(biggest) : "" }),
+        body: JSON.stringify({ latestVersion: version, downloadUrl: urls, size: biggest > 0 ? fmtSize(biggest) : "", tag: rel.tag, urls }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error ?? "Failed to apply release");

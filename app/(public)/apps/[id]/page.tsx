@@ -63,12 +63,14 @@ export default async function AppDetailPage({ params }: { params: { id: string }
       }));
   } catch {}
 
-  type DbVersion = { version: string; createdAt?: Date; notes?: string };
-  let versions: { version: string; date: string; notes: string }[] = [];
+  type DbVersion = { version: string; tag?: string; urls?: { android?: string; windows?: string; linux?: string }; createdAt?: Date; notes?: string };
+  let versions: { version: string; tag?: string; urls?: { android?: string; windows?: string; linux?: string }; date: string; notes: string }[] = [];
   try {
     const dbVersions = await AppVersion.find({ appId }).sort({ createdAt: -1 }).lean<DbVersion[]>();
     versions = dbVersions.map((v) => ({
       version: v.version,
+      tag: v.tag,
+      urls: v.urls,
       date: v.createdAt ? new Date(v.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "",
       notes: v.notes || "",
     }));
