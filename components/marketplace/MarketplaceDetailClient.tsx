@@ -11,10 +11,10 @@ type Plan = { name: string; price: string; cadence: string; description: string;
 
 const detailCopy = {
   en: {
-    home: "Home", apps: "Apps", verified: "Verified", reviews: "reviews", downloads: "Downloads", safe: "Safe", verifiedBy: "Verified by KWL Nexus", downloadNow: "Download Now", secureDownload: "Secure Download", freePlan: "Free Plan", forever: "Forever", overview: "Overview", features: "Features", screenshots: "Screenshots", changelog: "Changelog", reviewsTab: "Reviews", faq: "FAQ", askAnything: "Ask me anything...", helloAi: "Hello, I'm KWL AI", helpToday: "How can I help you today?", video: "Video", viewAllScreenshots: "View All Screenshots", aboutApp: "About This App", keyFeatures: "Key Features", allScreenshots: "All Screenshots", reviewSoon: "Reviews integration coming soon. Users can leave feedback via the feedback form below.", faqSoon: "Frequently asked questions will appear here.", secureLogin: "Download requires login", downloadStarted: "Download started", version: "Version", updated: "Updated", size: "Size", category: "Category", developer: "Developer", compatibility: "Compatibility", featureTitles: ["AI Chat", "Summarize", "Translate", "Write Anything", "Code Assistant", "Smart Notes"], featureDescriptions: ["Chat with AI for any question", "Summarize long articles, PDFs, and documents", "Translate text in 100+ languages instantly.", "Generate emails, blogs, reports, and more.", "Write, explain, and debug code with AI.", "Organize notes and ideas in one place."], previewPrompts: ["Summarize", "Write", "Translate", "Code", "Ideas"],
+    home: "Home", apps: "Apps", verified: "Verified", reviews: "reviews", downloads: "Downloads", safe: "Safe", verifiedBy: "Verified by KWL Nexus", downloadNow: "Download Now", secureDownload: "Secure Download", freePlan: "Free Plan", forever: "Forever", overview: "Overview", features: "Features", screenshots: "Screenshots", changelog: "Changelog", reviewsTab: "Reviews", faq: "FAQ", askAnything: "Ask me anything...", helloAi: "Hello, I'm KWL AI", helpToday: "How can I help you today?", video: "Video", viewAllScreenshots: "View All Screenshots", aboutApp: "About This App", keyFeatures: "Key Features", allScreenshots: "All Screenshots", reviewSoon: "Reviews integration coming soon. Users can leave feedback via the feedback form below.", noFeaturesYet: "No features listed yet.", noChangelogYet: "No changelog entries yet.", faqSoon: "Frequently asked questions will appear here.", secureLogin: "Download requires login", downloadStarted: "Download started", version: "Version", updated: "Updated", size: "Size", category: "Category", developer: "Developer", compatibility: "Compatibility", featureTitles: ["AI Chat", "Summarize", "Translate", "Write Anything", "Code Assistant", "Smart Notes"], featureDescriptions: ["Chat with AI for any question", "Summarize long articles, PDFs, and documents", "Translate text in 100+ languages instantly.", "Generate emails, blogs, reports, and more.", "Write, explain, and debug code with AI.", "Organize notes and ideas in one place."], previewPrompts: ["Summarize", "Write", "Translate", "Code", "Ideas"],
   },
   bn: {
-    home: "হোম", apps: "অ্যাপস", verified: "যাচাইকৃত", reviews: "রিভিউ", downloads: "ডাউনলোড", safe: "নিরাপদ", verifiedBy: "KWL Nexus দ্বারা যাচাইকৃত", downloadNow: "এখনই ডাউনলোড", secureDownload: "নিরাপদ ডাউনলোড", freePlan: "ফ্রি প্ল্যান", forever: "চিরস্থায়ী", overview: "সংক্ষিপ্ত বিবরণ", features: "ফিচার", screenshots: "স্ক্রিনশট", changelog: "পরিবর্তন তালিকা", reviewsTab: "রিভিউ", faq: "জিজ্ঞাসা", askAnything: "যেকোনো কিছু জিজ্ঞাসা করুন...", helloAi: "হ্যালো, আমি KWL AI", helpToday: "আজ কীভাবে সাহায্য করতে পারি?", video: "ভিডিও", viewAllScreenshots: "সব স্ক্রিনশট দেখুন", aboutApp: "এই অ্যাপ সম্পর্কে", keyFeatures: "মূল ফিচার", allScreenshots: "সব স্ক্রিনশট", reviewSoon: "রিভিউ সিস্টেম শীঘ্রই আসছে। নিচের ফিডব্যাক ফর্মে মতামত দিতে পারেন।", faqSoon: "সাধারণ জিজ্ঞাসাগুলো এখানে দেখা যাবে।", secureLogin: "ডাউনলোড করতে লগইন করুন", downloadStarted: "ডাউনলোড শুরু হয়েছে", version: "ভার্সন", updated: "আপডেট", size: "সাইজ", category: "ক্যাটাগরি", developer: "ডেভেলপার", compatibility: "সামঞ্জস্যতা", featureTitles: ["AI চ্যাট", "সারাংশ", "অনুবাদ", "যেকোনো লেখা", "কোড সহকারী", "স্মার্ট নোট"], featureDescriptions: ["যেকোনো প্রশ্নে AI-এর সাথে চ্যাট করুন", "দীর্ঘ আর্টিকেল, PDF ও ডকুমেন্টের সারাংশ তৈরি করুন", "মুহূর্তে ১০০টিরও বেশি ভাষায় অনুবাদ করুন", "ইমেইল, ব্লগ, রিপোর্ট ও আরও অনেক কিছু তৈরি করুন", "AI দিয়ে কোড লিখুন, বুঝুন ও ডিবাগ করুন", "এক জায়গায় নোট ও আইডিয়া সাজান"], previewPrompts: ["সারাংশ", "লেখা", "অনুবাদ", "কোড", "আইডিয়া"],
+    home: "হোম", apps: "অ্যাপস", verified: "যাচাইকৃত", reviews: "রিভিউ", downloads: "ডাউনলোড", safe: "নিরাপদ", verifiedBy: "KWL Nexus দ্বারা যাচাইকৃত", downloadNow: "এখনই ডাউনলোড", secureDownload: "নিরাপদ ডাউনলোড", freePlan: "ফ্রি প্ল্যান", forever: "চিরস্থায়ী", overview: "সংক্ষিপ্ত বিবরণ", features: "ফিচার", screenshots: "স্ক্রিনশট", changelog: "পরিবর্তন তালিকা", reviewsTab: "রিভিউ", faq: "জিজ্ঞাসা", askAnything: "যেকোনো কিছু জিজ্ঞাসা করুন...", helloAi: "হ্যালো, আমি KWL AI", helpToday: "আজ কীভাবে সাহায্য করতে পারি?", video: "ভিডিও", viewAllScreenshots: "সব স্ক্রিনশট দেখুন", aboutApp: "এই অ্যাপ সম্পর্কে", keyFeatures: "মূল ফিচার", allScreenshots: "সব স্ক্রিনশট", reviewSoon: "রিভিউ সিস্টেম শীঘ্রই আসছে। নিচের ফিডব্যাক ফর্মে মতামত দিতে পারেন।", noFeaturesYet: "এখনো কোনো ফিচার তালিকাভুক্ত হয়নি।", noChangelogYet: "এখনো কোনো চেঞ্জলগ নেই।", faqSoon: "সাধারণ জিজ্ঞাসাগুলো এখানে দেখা যাবে।", secureLogin: "ডাউনলোড করতে লগইন করুন", downloadStarted: "ডাউনলোড শুরু হয়েছে", version: "ভার্সন", updated: "আপডেট", size: "সাইজ", category: "ক্যাটাগরি", developer: "ডেভেলপার", compatibility: "সামঞ্জস্যতা", featureTitles: ["AI চ্যাট", "সারাংশ", "অনুবাদ", "যেকোনো লেখা", "কোড সহকারী", "স্মার্ট নোট"], featureDescriptions: ["যেকোনো প্রশ্নে AI-এর সাথে চ্যাট করুন", "দীর্ঘ আর্টিকেল, PDF ও ডকুমেন্টের সারাংশ তৈরি করুন", "মুহূর্তে ১০০টিরও বেশি ভাষায় অনুবাদ করুন", "ইমেইল, ব্লগ, রিপোর্ট ও আরও অনেক কিছু তৈরি করুন", "AI দিয়ে কোড লিখুন, বুঝুন ও ডিবাগ করুন", "এক জায়গায় নোট ও আইডিয়া সাজান"], previewPrompts: ["সারাংশ", "লেখা", "অনুবাদ", "কোড", "আইডিয়া"],
   },
 } as const;
 
@@ -54,12 +54,6 @@ export function MarketplaceDetailClient({
     { key: "Reviews", label: copy.reviewsTab, badge: String(reviewCount ?? 0) },
     { key: "FAQ", label: copy.faq },
   ];
-  const features = copy.featureTitles.map((title, index) => ({
-    title,
-    desc: copy.featureDescriptions[index],
-    icon: ["💬", "📄", "🌐", "✏️", "💻", "📝"][index],
-  }));
-
   const platformIcons: Record<string, typeof Monitor> = { Windows: Monitor, macOS: Monitor, Android: Smartphone, Linux: Terminal, iOS: Smartphone };
   const { status } = useSession();
   const { showToast } = useToast();
@@ -304,42 +298,50 @@ export function MarketplaceDetailClient({
             <div className="rounded-2xl border border-ink/10 bg-white p-5 dark:border-white/5 dark:bg-[#131a2e]">
               <h2 className="text-sm font-bold text-ink dark:text-white">{copy.aboutApp}</h2>
               <p className="mt-3 text-sm leading-6 text-ink/60 dark:text-white/60">{app.longDescription}</p>
-              <ul className="mt-4 space-y-2">
-                {["Smart AI chat for any question", "Summarize long articles and documents", "Translate text in 100+ languages", "Generate content, ideas, and code", "Manage notes and organize your work", "Secure, fast, and privacy-focused"].map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-xs text-ink/70 dark:text-white/70">
-                    <span className="grid h-4 w-4 place-items-center rounded-full bg-[#8b5cf6] text-white"><Check size={10} /></span> {f}
-                  </li>
-                ))}
-              </ul>
+              {(app.features ?? []).length > 0 && (
+                <ul className="mt-4 space-y-2">
+                  {(app.features ?? []).slice(0, 6).map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-xs text-ink/70 dark:text-white/70">
+                      <span className="grid h-4 w-4 place-items-center rounded-full bg-[#8b5cf6] text-white"><Check size={10} /></span> {f}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
           <div className={`rounded-2xl border border-ink/10 bg-white p-5 dark:border-white/5 dark:bg-[#131a2e] ${activeTab === "Features" ? "lg:col-span-2" : ""}`}>
             <h2 className="text-sm font-bold text-ink dark:text-white">{copy.keyFeatures}</h2>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {features.map((f) => (
-                <div key={f.title} className="flex gap-3 rounded-xl border border-ink/5 bg-paper/50 p-3 dark:border-white/5 dark:bg-white/[0.04]">
-                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#8b5cf6]/10 text-[#8b5cf6] text-sm">{f.icon}</span>
-                  <div>
-                    <p className="text-xs font-bold text-ink dark:text-white">{f.title}</p>
-                    <p className="text-[11px] leading-4 text-ink/50 dark:text-white/50">{f.desc}</p>
+            {(app.features ?? []).length > 0 ? (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {(app.features ?? []).map((f, i) => (
+                  <div key={`${f}-${i}`} className="flex gap-3 rounded-xl border border-ink/5 bg-paper/50 p-3 dark:border-white/5 dark:bg-white/[0.04]">
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#8b5cf6]/10 text-[#8b5cf6]"><Check size={15} /></span>
+                    <p className="self-center text-xs font-bold leading-5 text-ink dark:text-white">{f}</p>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-4 rounded-xl border border-dashed border-ink/15 px-4 py-8 text-center text-sm text-ink/45 dark:border-white/10 dark:text-white/40">{copy.noFeaturesYet}</p>
+            )}
           </div>
         </section>
       )}
+      {activeTab === "Features" && <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8"><div className="h-10" /></div>}
       {activeTab === "Changelog" && (
         <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 mt-6 rounded-2xl border border-ink/10 bg-white p-5 dark:border-white/5 dark:bg-[#131a2e]">
           <h2 className="text-sm font-bold text-ink dark:text-white">{copy.changelog}</h2>
-          <div className="mt-4 space-y-4">
-            {(app.versions ?? [{ version: "2.1.0", date: "May 12, 2024", notes: "Improved AI response and performance." }]).map((v) => (
-              <div key={v.version} className="border-l-2 border-primary pl-4">
-                <p className="font-bold text-ink dark:text-white">v{v.version} <span className="ml-2 text-xs font-medium text-ink/40 dark:text-white/40">{v.date}</span></p>
-                <p className="mt-1 text-sm text-ink/60 dark:text-white/60">{v.notes}</p>
-              </div>
-            ))}
-          </div>
+          {(app.versions ?? []).length > 0 ? (
+            <div className="mt-4 space-y-4">
+              {(app.versions ?? []).map((v) => (
+                <div key={v.version} className="border-l-2 border-primary pl-4">
+                  <p className="font-bold text-ink dark:text-white">v{v.version} <span className="ml-2 text-xs font-medium text-ink/40 dark:text-white/40">{v.date}</span></p>
+                  <p className="mt-1 text-sm text-ink/60 dark:text-white/60">{v.notes}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-4 rounded-xl border border-dashed border-ink/15 px-4 py-8 text-center text-sm text-ink/45 dark:border-white/10 dark:text-white/40">{copy.noChangelogYet}</p>
+          )}
         </section>
       )}
       {activeTab === "Reviews" && (
