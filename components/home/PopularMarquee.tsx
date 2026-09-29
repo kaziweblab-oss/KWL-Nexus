@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Sparkles, TrendingUp, Download, Star } from "lucide-react";
+import { Sparkles, TrendingUp, Download } from "lucide-react";
 import { apps as dummyApps, type AppRecord } from "@/lib/data/apps";
 import { useLanguage } from "@/components/shared/LanguageProvider";
 
-type PopularApp = AppRecord & { downloadCount?: number; iconUrl?: string | null };
+type PopularApp = AppRecord & { downloadCount?: number; iconUrl?: string | null; latestVersion?: string | null };
 
 export function PopularMarquee() {
   const { t, lang } = useLanguage();
@@ -103,12 +103,10 @@ export function PopularMarquee() {
               </div>
               <p className="line-clamp-1 text-xs leading-5 text-slate-600 dark:text-white/60">{app.description}</p>
               <div className="flex items-center gap-3 text-xs font-medium text-slate-500 dark:text-white/50">
-                <span className="flex items-center gap-1 text-amber-600 dark:text-[#d69b12]">
-                  <Star size={12} fill="currentColor" /> {app.rating}
-                </span>
                 <span className="flex items-center gap-1">
                   <Download size={11} /> {app.downloadCount && app.downloadCount > 0 ? `${app.downloadCount}` : app.downloads}
                 </span>
+                {app.latestVersion && <span>v{app.latestVersion}</span>}
               </div>
             </Link>
           ))}

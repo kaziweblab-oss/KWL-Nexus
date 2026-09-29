@@ -16,7 +16,7 @@ import {
   Monitor,
   Smartphone,
   Laptop,
-  Star,
+  Shapes,
   Crown,
   ChevronDown,
   ChevronLeft,
@@ -32,7 +32,7 @@ import { useLanguage } from "@/components/shared/LanguageProvider";
 
 const platformOptions = ["All Platforms", "Android", "Windows", "Linux"];
 const pricingOptions = ["All Pricing", "Free", "Paid", "Premium"];
-const sortOptions = ["Most Popular", "Highest Rated", "Newest"] as const;
+const sortOptions = ["Most Popular", "Newest"] as const;
 
 type DbApp = {
   id: string;
@@ -45,7 +45,6 @@ type DbApp = {
   iconUrl?: string | null;
   downloads: string;
   downloadCount: number;
-  rating: string;
   platforms: string[];
   latestVersion?: string | null;
 };
@@ -69,6 +68,14 @@ const platformIcons: Record<string, typeof Monitor> = {
   Windows: Monitor,
   Linux: Laptop,
 };
+
+// Honest compact counter: real values only, no invented baselines.
+function fmtCount(n: number) {
+  if (!n || n <= 0) return "0";
+  if (n < 1000) return `${n}`;
+  if (n < 1000000) return `${(n / 1000).toFixed(n < 10000 ? 1 : 0).replace(/\.0$/, "")}K`;
+  return `${(n / 1000000).toFixed(1).replace(/\.0$/, "")}M`;
+}
 
 function CustomDropdown({
   value,
@@ -155,13 +162,13 @@ function LightAppCard({ app, featured }: { app: DbApp; featured?: boolean }) {
         >
           {app.iconUrl ? <img src={app.iconUrl} alt={app.name} className="h-full w-full object-cover" /> : app.icon}
         </div>
-        <div className="min-w-0 flex-1">
+        <div className={`min-w-0 flex-1 ${featured ? "pr-9" : ""}`}>
           <h3 className="truncate text-[14px] font-bold leading-tight text-ink dark:text-white">{app.name}</h3>
           <p className="text-[11.5px] font-medium text-ink/50 dark:text-white/50">{app.category}</p>
           <div className="mt-1 flex items-center gap-1 text-[11.5px]">
-            <Star size={13} className="text-amber-500" fill="currentColor" />
-            <span className="font-semibold text-ink dark:text-white">{app.rating}</span>
-            <span className="text-ink/40 dark:text-white/40">({app.downloads})</span>
+            <DownloadIcon size={13} className="text-[#6C63FF]" />
+            <span className="font-semibold text-ink dark:text-white">{app.downloads}</span>
+            <span className="text-ink/40 dark:text-white/40">downloads{app.latestVersion ? ` · v${app.latestVersion}` : ""}</span>
           </div>
         </div>
       </div>
@@ -197,15 +204,21 @@ export function AppDirectory() {
 
   const [dbApps, setDbApps] = useState<DbApp[]>([]);
   const [loading, setLoading] = useState(true);
+  const [storeStats, setStoreStats] = useState({ apps: 0, users: 0, downloads: 0 });
 
   useEffect(() => {
     let active = true;
     async function load() {
       setLoading(true);
       try {
-        const res = await fetch("/api/public/apps", { cache: "no-store" });
-        const j = await res.json();
+        const [appsRes, statsRes] = await Promise.all([
+          fetch("/api/public/apps", { cache: "no-store" }),
+          fetch("/api/public/stats", { cache: "no-store" }),
+        ]);
+        const j = await appsRes.json();
         if (active && Array.isArray(j.data)) setDbApps(j.data);
+        const s = await statsRes.json().catch(() => ({}));
+        if (active && s.data) setStoreStats({ apps: s.data.apps ?? 0, users: s.data.users ?? 0, downloads: s.data.downloads ?? 0 });
       } catch {
         if (active) setDbApps([]);
       } finally {
@@ -241,7 +254,6 @@ export function AppDirectory() {
       return cat && plat && matchesQuery;
     });
     if (sortBy === "Most Popular") list = [...list].sort((a, b) => b.downloadCount - a.downloadCount);
-    if (sortBy === "Highest Rated") list = [...list].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
     return list;
   }, [category, platform, query, sortBy, dbApps]);
 
@@ -413,10 +425,10 @@ export function AppDirectory() {
       {/* Stats bar — i18n + real counts */}
       <div className="mt-4 sm:mt-5 grid grid-cols-2 gap-2 sm:gap-3 rounded-2xl border border-[#ede8ff] bg-[#f5f0ff] p-2 sm:p-3 lg:grid-cols-4 dark:border-white/5 dark:bg-[#131a2e]">
         {[
-          { label: t("statsApps"), value: `${dbApps.length || 0}+`, icon: Boxes, color: "text-[#6C63FF] bg-white" },
-          { label: t("statsDownloads"), value: totalDownloads ? `${(totalDownloads/1000).toFixed(0)}K+` : "0+", icon: DownloadIcon, color: "text-[#0ea5e9] bg-white" },
-          { label: t("statsUsers"), value: "10K+", icon: LayoutGrid, color: "text-[#6C63FF] bg-white" },
-          { label: t("statsRating"), value: "4.9/5", icon: Star, color: "text-amber-500 bg-white" },
+          { label: t("statsApps"), value: `${storeStats.apps || dbApps.length}+`, icon: Boxes, color: "text-[#6C63FF] bg-white" },
+          { label: t("statsDownloads"), value: fmtCount(storeStats.downloads || totalDownloads), icon: DownloadIcon, color: "text-[#0ea5e9] bg-white" },
+          { label: t("statsUsers"), value: fmtCount(storeStats.users), icon: LayoutGrid, color: "text-[#6C63FF] bg-white" },
+          { label: t("statsCategories"), value: `${Math.max(0, categories.length - 1)}`, icon: Shapes, color: "text-amber-500 bg-white" },
         ].map((s) => {
           const Icon = s.icon;
           return (

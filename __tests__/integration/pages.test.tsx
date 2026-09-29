@@ -9,25 +9,45 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn(), back: jest.fn(), refresh: jest.fn(), replace: jest.fn() }),
   useSearchParams: () => ({ get: jest.fn(() => null) }),
   usePathname: () => "/",
-  notFound: jest.fn(),
+  notFound: jest.fn(() => { throw new Error("NEXT_NOT_FOUND"); }),
 }));
+jest.mock("@/lib/db/connect", () => ({ connectToDatabase: jest.fn().mockResolvedValue(undefined) }));
+jest.mock("@/models/App", () => ({ __esModule: true, default: { findOne: jest.fn() } }));
+jest.mock("@/models/Plan", () => ({ __esModule: true, default: { find: jest.fn() } }));
+jest.mock("@/models/AppVersion", () => ({ __esModule: true, default: { find: jest.fn() } }));
+jest.mock("@/models/Feedback", () => ({ __esModule: true, default: { aggregate: jest.fn() } }));
+jest.mock("@/components/shared/PaymentRequestForm", () => ({ PaymentRequestForm: () => <div data-testid="pay-form" /> }));
+jest.mock("@/components/shared/FeedbackForm", () => ({ FeedbackForm: () => <div data-testid="feedback-form" /> }));
+
+import App from "@/models/App";
+import Plan from "@/models/Plan";
+import AppVersion from "@/models/AppVersion";
+import Feedback from "@/models/Feedback";
 
 test("homepage exposes the store promise and browse CTA", () => {
   render(<LanguageProvider><Home /></LanguageProvider>);
-  expect(screen.getByRole("heading", { name: /Discover\. Download\. Deploy/ })).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: /Browse Apps/ })).toHaveAttribute("href", "/apps");
+  expect(screen.getByRole("heading", { name: /Go Further/ })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /Explore Apps/ })).toHaveAttribute("href", "/apps");
 });
 
-test("app detail page renders plans and manual payment flow", () => {
-  render(<AppDetailPage params={{ id: "focus-flow" }} />);
-  expect(screen.getByRole("heading", { name: "Focus Flow" })).toBeInTheDocument();
-  // Support both English and Bengali plan header (page uses Bengali per spec)
-  expect(screen.getByText(/Choose your plan|প্ল্যান নির্বাচন করুন/)).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: /Pay manually/ })).toBeInTheDocument();
+test("app detail page renders a published db app", async () => {
+  (App.findOne as jest.Mock).mockReturnValue({ lean: () => Promise.resolve({ _id: "app1", name: "KWL Video Downloader", slug: "kwl-video-downloader", description: "Downloader", category: "Multimedia", downloadCount: 7, latestVersion: "1.0.7", features: [], screenshots: [], downloadUrl: {} }) });
+  (Plan.find as jest.Mock).mockResolvedValue([]);
+  (AppVersion.find as jest.Mock).mockReturnValue({ sort: () => Promise.resolve([]) });
+  (Feedback.aggregate as jest.Mock).mockResolvedValue([]);
+  const ui = await AppDetailPage({ params: { id: "kwl-video-downloader" } });
+  render(<LanguageProvider>{ui as unknown as React.ReactElement}</LanguageProvider>);
+  expect(screen.getByRole("heading", { name: "KWL Video Downloader" })).toBeInTheDocument();
+  expect(screen.getByTestId("pay-form")).toBeInTheDocument();
+});
+
+test("app detail page 404s for unknown apps", async () => {
+  (App.findOne as jest.Mock).mockReturnValue({ lean: () => Promise.resolve(null) });
+  await expect(AppDetailPage({ params: { id: "nope" } })).rejects.toThrow("NEXT_NOT_FOUND");
 });
 
 test("admin dashboard metrics render for overview", () => {
-  render(<AdminStatCards />);
+  render(<LanguageProvider><AdminStatCards /></LanguageProvider>);
   expect(screen.getByText("Total Apps")).toBeInTheDocument();
   expect(screen.getByText("Revenue")).toBeInTheDocument();
 });

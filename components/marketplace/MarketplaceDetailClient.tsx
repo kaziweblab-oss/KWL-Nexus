@@ -24,12 +24,14 @@ export function MarketplaceDetailClient({
   screenshots,
   previewImageUrl,
   previewVideoUrl,
+  reviewCount,
 }: {
   app: { id: string; name: string; category: string; icon: string; accent: string; rating: string; downloads: string; description: string; longDescription: string; platforms: string[]; features?: string[]; versions?: { version: string; date: string; notes: string }[] };
   plans: Plan[];
   screenshots: string[];
   previewImageUrl?: string;
   previewVideoUrl?: string;
+  reviewCount?: number;
 }) {
   const [activeTab, setActiveTab] = useState("Overview");
   const [showAllPlans, setShowAllPlans] = useState(false);
@@ -49,7 +51,7 @@ export function MarketplaceDetailClient({
     { key: "Features", label: copy.features },
     { key: "Screenshots", label: copy.screenshots, badge: String(screenshots.length) },
     { key: "Changelog", label: copy.changelog },
-    { key: "Reviews", label: copy.reviewsTab, badge: "2.1K" },
+    { key: "Reviews", label: copy.reviewsTab, badge: String(reviewCount ?? 0) },
     { key: "FAQ", label: copy.faq },
   ];
   const features = copy.featureTitles.map((title, index) => ({
@@ -104,8 +106,9 @@ export function MarketplaceDetailClient({
                 <p className="text-xs font-medium text-[#0ea5e9] dark:text-[#38bdf8]">{app.category}</p>
                 <p className="text-xs text-ink/60 dark:text-white/60">KWL Nexus Team <BadgeCheck size={12} className="inline text-[#0ea5e9]" /></p>
                 <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
-                  <span className="flex items-center gap-1 font-semibold text-amber-500"><Star size={13} fill="currentColor" /> {app.rating} <span className="font-normal text-ink/40 dark:text-white/40">(2.1K {copy.reviews})</span></span>
-                  <span className="flex items-center gap-1 text-ink/60 dark:text-white/60"><Download size={12} /> 50K+ <span className="text-ink/40 dark:text-white/40">{copy.downloads}</span></span>
+                  {app.rating ? <span className="flex items-center gap-1 font-semibold text-amber-500"><Star size={13} fill="currentColor" /> {app.rating}</span> : null}
+                  <span className="font-normal text-ink/40 dark:text-white/40">({reviewCount ?? 0} {copy.reviews})</span>
+                  <span className="flex items-center gap-1 text-ink/60 dark:text-white/60"><Download size={12} /> {app.downloads} <span className="text-ink/40 dark:text-white/40">{copy.downloads}</span></span>
                   <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><ShieldCheck size={12} /> {copy.safe} <span className="text-ink/40 dark:text-white/30 text-[10px]">{copy.verifiedBy}</span></span>
                 </div>
               </div>
@@ -290,7 +293,7 @@ export function MarketplaceDetailClient({
           {activeTab === "Overview" && (
             <div className="rounded-2xl border border-ink/10 bg-white p-5 dark:border-white/5 dark:bg-[#131a2e]">
               <h2 className="text-sm font-bold text-ink dark:text-white">{copy.aboutApp}</h2>
-              <p className="mt-3 text-sm leading-6 text-ink/60 dark:text-white/60">{app.longDescription} KWL AI Assistant is a next-generation AI productivity tool designed to help you work smarter and faster. It combines the power of advanced AI models with a beautiful, easy-to-use interface.</p>
+              <p className="mt-3 text-sm leading-6 text-ink/60 dark:text-white/60">{app.longDescription}</p>
               <ul className="mt-4 space-y-2">
                 {["Smart AI chat for any question", "Summarize long articles and documents", "Translate text in 100+ languages", "Generate content, ideas, and code", "Manage notes and organize your work", "Secure, fast, and privacy-focused"].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-xs text-ink/70 dark:text-white/70">
@@ -331,7 +334,7 @@ export function MarketplaceDetailClient({
       )}
       {activeTab === "Reviews" && (
         <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 mt-6 rounded-2xl border border-ink/10 bg-white p-5 dark:border-white/5 dark:bg-[#131a2e]">
-          <h2 className="text-sm font-bold text-ink dark:text-white">{copy.reviewsTab} (2.1K)</h2>
+          <h2 className="text-sm font-bold text-ink dark:text-white">{copy.reviewsTab} ({reviewCount ?? 0})</h2>
           <p className="mt-3 text-sm text-ink/60 dark:text-white/60">{copy.reviewSoon}</p>
         </section>
       )}

@@ -1,64 +1,126 @@
 import { notFound } from "next/navigation";
-import { getApp } from "@/lib/data/apps";
 import { connectToDatabase } from "@/lib/db/connect";
 import Plan from "@/models/Plan";
 import App from "@/models/App";
+import AppVersion from "@/models/AppVersion";
+import Feedback from "@/models/Feedback";
+
+function isObjectIdLike(id: string) {
+  return /^[a-f\d]{24}$/i.test(id);
+}
 import { MarketplaceDetailClient } from "@/components/marketplace/MarketplaceDetailClient";
 import { PaymentRequestForm } from "@/components/shared/PaymentRequestForm";
 import { FeedbackForm } from "@/components/shared/FeedbackForm";
 
-// Marketplace detail - dark reference implant, redesign from current UI
+// Marketplace detail — DB-driven (published apps). Dummy catalog is no longer consulted,
+// so GitHub-imported apps resolve by slug or ObjectId instead of 404.
 export default async function AppDetailPage({ params }: { params: { id: string } }) {
-  const app = getApp(params.id);
-  if (!app) notFound();
+  await connectToDatabase().catch(() => null);
 
-  let plans = app.plans;
+  const or: Record<string, unknown>[] = [{ slug: params.id }, { slug: params.id.toLowerCase() }];
+  if (isObjectIdLike(params.id)) or.push({ _id: params.id });
+
+  type DbApp = {
+    _id: unknown;
+    name: string;
+    slug: string;
+    description: string;
+    category: string;
+    iconUrl?: string;
+    downloadCount?: number;
+    latestVersion?: string;
+    features?: string[];
+    screenshots?: string[];
+    previewImageUrl?: string;
+    previewVideoUrl?: string;
+    screenshotVideos?: string[];
+    downloadUrl?: { android?: string; windows?: string; linux?: string; apk?: string; exe?: string; deb?: string };
+  };
+  const dbApp = (await App.findOne({ isPublished: true, $or: or }).lean().catch(() => null)) as unknown as DbApp | null;
+  if (!dbApp) notFound();
+
+  const appId = String((dbApp._id as { toString(): string }).toString());
+  const slug = dbApp.slug;
+
+  type DbPlan = { name: string; price: number; interval: string; durationDays?: number | null; refundEnabled?: boolean; refundDays?: number | null; description?: string; isActive?: boolean; features?: string[] };
+  let plans: { name: string; price: string; cadence: string; refundEnabled?: boolean; refundDays?: number | null; description: string; featured?: boolean; features: string[] }[] = [];
   try {
-    await connectToDatabase();
-    type DbPlan = { name: string; price: number; interval: string; durationDays?: number | null; refundEnabled?: boolean; refundDays?: number | null; description?: string; isActive?: boolean; features?: string[] };
-    const dbPlans = await Plan.find({ $or: [{ appId: params.id }, { appSlug: params.id }] }).lean<DbPlan[]>();
-    if (dbPlans.length) {
-      plans = dbPlans
-        .filter((p) => p.isActive !== false)
-        .map((p) => ({
-          name: p.name,
-          price: `$${p.price}`,
-          cadence: p.interval === "lifetime" ? " one-time" : p.interval === "custom" ? ` / ${p.durationDays ?? "custom"} days` : `/${p.interval}`,
-          refundEnabled: p.refundEnabled,
-          refundDays: p.refundDays,
-          description: p.description || "",
-          featured: p.isActive,
-          features: p.features ?? [],
-        }));
-    }
+    const dbPlans = await Plan.find({ $or: [{ appId }, { appId: slug }, { appSlug: slug }] }).lean<DbPlan[]>();
+    plans = dbPlans
+      .filter((p) => p.isActive !== false)
+      .map((p) => ({
+        name: p.name,
+        price: p.price === 0 ? "Free" : `$${p.price}`,
+        cadence: p.interval === "lifetime" ? " one-time" : p.interval === "custom" ? ` / ${p.durationDays ?? "custom"} days` : `/${p.interval}`,
+        refundEnabled: p.refundEnabled,
+        refundDays: p.refundDays,
+        description: p.description || "",
+        featured: p.isActive,
+        features: p.features ?? [],
+      }));
   } catch {}
 
-  let screenshots = app.screenshots ?? ["Workspace", "Quick setup", "Daily view", "Analytics"];
-  let masterFeatures = app.features ?? [];
-  let previewImageUrl: string | undefined;
-  let previewVideoUrl: string | undefined;
+  type DbVersion = { version: string; createdAt?: Date; notes?: string };
+  let versions: { version: string; date: string; notes: string }[] = [];
   try {
-    const dbApp = (await App.findOne({ slug: params.id.toLowerCase() }).lean()) as unknown as { features?: string[]; screenshots?: string[]; previewImageUrl?: string; previewVideoUrl?: string; screenshotVideos?: string[] } | null;
-    if (dbApp?.features?.length) masterFeatures = dbApp.features;
-    if (dbApp?.screenshots?.length) {
-      // if first item is video, keep order; manager ensures video first
-      screenshots = dbApp.screenshots;
-    }
-    if (dbApp?.screenshotVideos?.length && dbApp.screenshotVideos[0]) {
-      // ensure video is first
-      const vid = dbApp.screenshotVideos[0];
-      screenshots = [vid, ...screenshots.filter((s) => s !== vid)];
-    }
-    if (dbApp?.previewImageUrl) previewImageUrl = dbApp.previewImageUrl;
-    if (dbApp?.previewVideoUrl) previewVideoUrl = dbApp.previewVideoUrl;
+    const dbVersions = await AppVersion.find({ appId }).sort({ createdAt: -1 }).lean<DbVersion[]>();
+    versions = dbVersions.map((v) => ({
+      version: v.version,
+      date: v.createdAt ? new Date(v.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "",
+      notes: v.notes || "",
+    }));
   } catch {}
+  if (!versions.length && dbApp.latestVersion) {
+    versions = [{ version: dbApp.latestVersion, date: "", notes: "Current release." }];
+  }
+
+  // Real review stats from user feedback (no invented ratings).
+  let reviewCount = 0;
+  let rating = "";
+  try {
+    const stats = (await Feedback.aggregate([
+      { $match: { appId: dbApp._id as unknown as object } },
+      { $group: { _id: null, count: { $sum: 1 }, avg: { $avg: "$rating" } } },
+    ]).catch(() => [])) as { count?: number; avg?: number }[];
+    reviewCount = stats[0]?.count ?? 0;
+    if (stats[0]?.avg) rating = stats[0].avg.toFixed(1);
+  } catch {}
+
+  const urls = dbApp.downloadUrl ?? {};
+  const platforms: string[] = [];
+  if (urls.android || urls.apk) platforms.push("Android");
+  if (urls.windows || urls.exe) platforms.push("Windows");
+  if (urls.linux || urls.deb) platforms.push("Linux");
+
+  const screenshots = dbApp.screenshots?.length ? dbApp.screenshots : [];
+  const masterFeatures = dbApp.features ?? [];
 
   return (
     <>
-      <MarketplaceDetailClient app={{ ...app, features: masterFeatures }} plans={plans} screenshots={screenshots} previewImageUrl={previewImageUrl} previewVideoUrl={previewVideoUrl} />
+      <MarketplaceDetailClient
+        app={{
+          id: slug,
+          name: dbApp.name,
+          category: dbApp.category,
+          icon: dbApp.name.slice(0, 1).toUpperCase(),
+          accent: "#6C63FF",
+          rating,
+          downloads: String(dbApp.downloadCount ?? 0),
+          description: dbApp.description,
+          longDescription: dbApp.description,
+          platforms,
+          features: masterFeatures,
+          versions,
+        }}
+        plans={plans}
+        reviewCount={reviewCount}
+        screenshots={screenshots}
+        previewImageUrl={dbApp.previewImageUrl}
+        previewVideoUrl={dbApp.previewVideoUrl}
+      />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <PaymentRequestForm appName={app.name} amount={plans[0]?.price ?? app.plans[0].price} />
-        <FeedbackForm appId={app.id} />
+        <PaymentRequestForm appName={dbApp.name} amount={plans[0]?.price ?? "Free"} />
+        <FeedbackForm appId={slug} />
       </div>
     </>
   );

@@ -19,11 +19,21 @@ export default function Home() {
 
   const [popularApps, setPopularApps] = useState<HomeApp[]>([]);
   const [latestApps, setLatestApps] = useState<HomeApp[]>([]);
+  const [stats, setStats] = useState({ apps: 0, users: 0, downloads: 0, loaded: false });
 
   useEffect(() => {
-    fetch("/api/apps/popular", { cache: "no-store" }).then((r) => r.json()).then((j) => { if (Array.isArray(j.data)) setPopularApps(j.data.slice(0, 4).map((a: HomeApp) => ({ ...a, platforms: (a as unknown as { platforms?: string[] }).platforms ?? ["Windows"], accent: (a as unknown as { accent?: string }).accent ?? "#6C63FF", icon: a.name.slice(0,1).toUpperCase(), rating: (a as unknown as { rating?: string }).rating ?? "4.9", downloads: (a as unknown as { downloads?: string }).downloads ?? String(a.downloadCount ?? 0) }))); }).catch(() => setPopularApps([]));
-    fetch("/api/apps/new-releases", { cache: "no-store" }).then((r) => r.json()).then((j) => { if (Array.isArray(j.data)) setLatestApps(j.data.slice(0, 4).map((a: HomeApp) => ({ ...a, platforms: (a as unknown as { platforms?: string[] }).platforms ?? ["Windows"], accent: "#6C63FF", icon: a.name.slice(0,1).toUpperCase(), rating: (a as unknown as { rating?: string }).rating ?? "4.9", downloads: (a as unknown as { downloads?: string }).downloads ?? "—" }))); }).catch(() => setLatestApps([]));
+    fetch("/api/apps/popular", { cache: "no-store" }).then((r) => r.json()).then((j) => { if (Array.isArray(j.data)) setPopularApps(j.data.slice(0, 4).map((a: HomeApp) => ({ ...a, platforms: (a as unknown as { platforms?: string[] }).platforms ?? ["Windows"], accent: (a as unknown as { accent?: string }).accent ?? "#6C63FF", icon: a.name.slice(0,1).toUpperCase(), downloads: (a as unknown as { downloads?: string }).downloads ?? String(a.downloadCount ?? 0) }))); }).catch(() => setPopularApps([]));
+    fetch("/api/apps/new-releases", { cache: "no-store" }).then((r) => r.json()).then((j) => { if (Array.isArray(j.data)) setLatestApps(j.data.slice(0, 4).map((a: HomeApp) => ({ ...a, platforms: (a as unknown as { platforms?: string[] }).platforms ?? ["Windows"], accent: "#6C63FF", icon: a.name.slice(0,1).toUpperCase(), downloads: (a as unknown as { downloads?: string }).downloads ?? "—" }))); }).catch(() => setLatestApps([]));
+    fetch("/api/public/stats", { cache: "no-store" }).then((r) => r.json()).then((j) => { if (j.data) setStats({ apps: j.data.apps ?? 0, users: j.data.users ?? 0, downloads: j.data.downloads ?? 0, loaded: true }); }).catch(() => {});
   }, []);
+
+  function fmtCount(n: number) {
+    if (!stats.loaded) return "—";
+    if (n <= 0) return "0";
+    if (n < 1000) return `${n}`;
+    if (n < 1000000) return `${(n / 1000).toFixed(n < 10000 ? 1 : 0).replace(/\.0$/, "")}K`;
+    return `${(n / 1000000).toFixed(1).replace(/\.0$/, "")}M`;
+  }
 
   const platformIcons: Record<string, typeof Monitor> = {
     Android: Smartphone,
@@ -161,7 +171,7 @@ export default function Home() {
               <Bot size={22} className="text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-[#0f0f1e] dark:text-white">100+</p>
+              <p className="text-2xl font-bold text-[#0f0f1e] dark:text-white">{stats.loaded ? `${stats.apps}` : "—"}</p>
               <p className="text-xs font-medium text-slate-500 dark:text-white/50">{t("statsApps")}</p>
             </div>
           </div>
@@ -170,7 +180,7 @@ export default function Home() {
               <Download size={22} className="text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-[#0f0f1e] dark:text-white">50K+</p>
+              <p className="text-2xl font-bold text-[#0f0f1e] dark:text-white">{fmtCount(stats.downloads)}</p>
               <p className="text-xs font-medium text-slate-500 dark:text-white/50">{t("statsDownloads")}</p>
             </div>
           </div>
@@ -179,7 +189,7 @@ export default function Home() {
               <Users size={22} className="text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-[#0f0f1e] dark:text-white">10K+</p>
+              <p className="text-2xl font-bold text-[#0f0f1e] dark:text-white">{fmtCount(stats.users)}</p>
               <p className="text-xs font-medium text-slate-500 dark:text-white/50">{t("statsUsers")}</p>
             </div>
           </div>
@@ -188,8 +198,8 @@ export default function Home() {
               <Star size={22} className="text-orange-500 dark:text-orange-400" fill="currentColor" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-[#0f0f1e] dark:text-white">4.9/5</p>
-              <p className="text-xs font-medium text-slate-500 dark:text-white/50">{t("statsRating")}</p>
+              <p className="text-2xl font-bold text-[#0f0f1e] dark:text-white">{stats.loaded ? `${latestApps.length}` : "—"}</p>
+              <p className="text-xs font-medium text-slate-500 dark:text-white/50">{t("statsNewReleases")}</p>
             </div>
           </div>
         </div>

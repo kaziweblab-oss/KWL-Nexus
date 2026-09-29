@@ -13,8 +13,15 @@ function toCard(app: {
   iconUrl?: string;
   downloadCount?: number;
   latestVersion?: string;
+  downloadUrl?: { android?: string; windows?: string; linux?: string; apk?: string; exe?: string; deb?: string };
 }) {
   const id = (app as unknown as { _id?: unknown })._id?.toString() || app.slug || app.name.toLowerCase().replace(/\s+/g, "-");
+  // Real platforms derived from stored download URLs (no hardcoded claims).
+  const urls = app.downloadUrl ?? {};
+  const platforms: string[] = [];
+  if (urls.android || urls.apk) platforms.push("Android");
+  if (urls.windows || urls.exe) platforms.push("Windows");
+  if (urls.linux || urls.deb) platforms.push("Linux");
   return {
     id,
     slug: app.slug || id,
@@ -26,9 +33,8 @@ function toCard(app: {
     iconUrl: (app as unknown as { iconUrl?: string }).iconUrl || null,
     downloads: String(app.downloadCount ?? 0),
     downloadCount: app.downloadCount ?? 0,
-    rating: "4.9",
     latestVersion: app.latestVersion || null,
-    platforms: ["Windows"] as string[],
+    platforms,
   };
 }
 
