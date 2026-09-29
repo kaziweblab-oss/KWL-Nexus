@@ -204,9 +204,15 @@ export function MarketplaceDetailClient({
                 </div>
               ))}
             </div>
-            <button onClick={() => setShowAllPlans(true)} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-ink/10 bg-white py-2 text-xs font-semibold text-ink hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
-              <span className="text-amber-500">👑</span> View All Plans
-            </button>
+            {plans.length > 0 ? (
+              <button onClick={() => setShowAllPlans(true)} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-ink/10 bg-white py-2 text-xs font-semibold text-ink hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
+                <span className="text-amber-500">👑</span> View All Plans
+              </button>
+            ) : (
+              <p className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-50/60 py-2 text-xs font-bold text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                <Check size={13} /> Free forever — no paid plans
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -225,6 +231,16 @@ export function MarketplaceDetailClient({
               </button>
             </div>
             <div className="mt-6 flex flex-wrap justify-around gap-6">
+              {plans.length === 0 && (
+                <div className="flex w-full max-w-[340px] flex-col items-center rounded-[1.5rem] border border-emerald-500/30 bg-emerald-50/60 p-8 text-center dark:border-emerald-400/30 dark:bg-emerald-500/10">
+                  <span className="grid h-12 w-12 place-items-center rounded-full bg-emerald-500 text-white"><Check size={22} /></span>
+                  <p className="mt-4 text-lg font-extrabold text-ink dark:text-white">{lang === "bn" ? "সম্পূর্ণ ফ্রি" : "Completely Free"}</p>
+                  <p className="mt-1 text-xs leading-5 text-ink/60 dark:text-white/60">{lang === "bn" ? "এই অ্যাপের কোনো পেইড প্ল্যান নেই — সবাই ফ্রি ব্যবহার করতে পারবে।" : "No paid plans for this app — free for everyone, forever."}</p>
+                  <button onClick={() => { setShowAllPlans(false); handleDownload(); }} className="mt-5 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700">
+                    <Download size={14} /> {copy.downloadNow}
+                  </button>
+                </div>
+              )}
               {plans.map((p) => {
                 const feats = getPlanFeatures(p);
                 const isFeatured = !!p.featured;

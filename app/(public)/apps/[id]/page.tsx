@@ -126,7 +126,7 @@ export default async function AppDetailPage({ params }: { params: { id: string }
         previewVideoUrl={dbApp.previewVideoUrl}
       />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <PaymentRequestForm appName={dbApp.name} amount={plans[0]?.price ?? "Free"} />
+        {plans.length > 0 && <PaymentRequestForm appName={dbApp.name} amount={plans[0]?.price ?? "Free"} />}
         <FeedbackForm appId={slug} />
       </div>
     </>
