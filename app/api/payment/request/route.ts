@@ -103,6 +103,8 @@ export async function POST(req: NextRequest) {
     }
 
     const resolvedPlanId = plan._id;
+    // Normalize TrxID (defense in depth — client already formats per method).
+    const transactionId = parsed.data.transactionId.trim().toUpperCase().replace(/\s+/g, "");
     const payment = new Payment({
       userId: user._id,
       planId: resolvedPlanId,
@@ -111,7 +113,7 @@ export async function POST(req: NextRequest) {
       currency: plan.currency || "BDT",
       status: "pending",
       paymentMethod: parsed.data.paymentMethod,
-      transactionId: parsed.data.transactionId,
+      transactionId,
       notes: parsed.data.notes,
       deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
@@ -119,7 +121,7 @@ export async function POST(req: NextRequest) {
     await payment.save();
     await notifyAdmins(
       "New payment request",
-      `${user.email} submitted a ${parsed.data.paymentMethod} payment request for ${plan.name} (${parsed.data.appId}). Transaction ID: ${parsed.data.transactionId}.`,
+      `${user.email} submitted a ${parsed.data.paymentMethod} payment request for ${plan.name} (${parsed.data.appId}). Transaction ID: ${transactionId}.`,
       "payment",
     );
     // notify user — order successfully submitted
@@ -128,7 +130,7 @@ export async function POST(req: NextRequest) {
         userId: user._id,
         email: user.email.toLowerCase().trim(),
         title: "Order submitted successfully",
-        message: `Your payment request for ${plan.name} (${parsed.data.appId}) has been submitted successfully. Transaction ID: ${parsed.data.transactionId}. We will verify and activate within 24 hours.`,
+        message: `Your payment request for ${plan.name} (${parsed.data.appId}) has been submitted successfully. Transaction ID: ${transactionId}. We will verify and activate within 24 hours.`,
         type: "payment",
         appId: parsed.data.appId,
         appName: plan.name,
