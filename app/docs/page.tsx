@@ -86,7 +86,7 @@ export default function DocsPage() {
         <a href="/api/docs/postman" className="flex items-center gap-2 rounded-full border border-ink/15 px-4 py-2.5 text-sm font-semibold text-ink sm:px-5 sm:py-3">
           <Download size={16} /> {t("postman")}
         </a>
-        <a href="/api/docs/pdf" className="flex items-center gap-2 rounded-full border border-ink/15 px-4 py-2.5 text-sm font-semibold text-ink sm:px-5 sm:py-3">
+        <a href="/kwl-nexus-integration-guide.pdf" download className="flex items-center gap-2 rounded-full border border-ink/15 px-4 py-2.5 text-sm font-semibold text-ink sm:px-5 sm:py-3">
           <Download size={16} /> {t("pdfGuide")}
         </a>
       </div>

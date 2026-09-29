@@ -1,0 +1,58 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Count 3 /Kids [5 0 R 7 0 R 9 0 R] >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>
+endobj
+6 0 obj
+<< /Length 2888 >>
+stream
+0.420 0.390 1.000 rg 0 782 612 10 re f 0.420 0.390 1.000 rg 64 46 484 1.5 re f 0.55 0.55 0.65 rg /F1 9 Tf 1 0 0 1 64 30 Tm (KWL-NEXUS Integration Guide  -  Page 1 of 3) Tj BT 0.420 0.390 1.000 rg /F2 13 Tf 1 0 0 1 64 666.0 Tm (KWL-NEXUS) Tj 0.090 0.090 0.180 rg /F2 30 Tf 1 0 0 1 64 625.0 Tm (App Integration Guide) Tj 0.380 0.380 0.450 rg /F1 15 Tf 1 0 0 1 64 600.0 Tm (For new app developers) Tj 0.380 0.380 0.450 rg /F1 11 Tf 1 0 0 1 64 580.0 Tm (Connect reports, tutorials, catalog and plans. Version 1.0.) Tj 0.420 0.390 1.000 rg /F2 15 Tf 1 0 0 1 64 546.0 Tm (1. Connect your app in 4 steps) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 506.0 Tm (Step 1 - Ask the Nexus admin for two things: \(a\) an API key) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 487.0 Tm (\(starts with kn_live_\) and \(b\) your appId \(Mongo ObjectId\).) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 463.0 Tm (Step 2 - Send the key on every request in the x-api-key header.) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 439.0 Tm (Step 3 - Implement Reports \(section 3\) so users can send feedback.) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 415.0 Tm (Step 4 - Implement Help/Tutorial \(section 4\) using cached content.) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 391.0 Tm (Base URL is your Nexus domain, e.g. https://kwl-nexus.onrender.com) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 372.0 Tm (Keep the API key secret: ship it as a build secret, never in chat.) Tj 0.420 0.390 1.000 rg /F2 15 Tf 1 0 0 1 64 349.0 Tm (2. Authentication and limits) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 309.0 Tm (Header: x-api-key: kn_live_...  \(Authorization: Bearer also works\)) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 285.0 Tm (Rate limit: 1000 requests per hour per key \(shared by all installs\).) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 261.0 Tm (401 = missing/invalid/revoked key. 429 = slow down and retry later.) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 237.0 Tm (404 on /apps/<id>/... usually means a wrong appId or unpublished app.) Tj 0.420 0.390 1.000 rg /F2 15 Tf 1 0 0 1 64 214.0 Tm (3. Reports API - POST /api/feedback) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 174.0 Tm (Send user reports \(errors, suggestions, feature requests, ratings\).) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 150.0 Tm (Required: appId, type, title \(3-160 chars\), description \(5-5000\).) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 131.0 Tm (type is one of: bug_report | suggestion | feature_request | rating) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 112.0 Tm (Optional: link \(problem URL, max 2000\), contactEmail, rating 1-5,) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 93.0 Tm (screenshot \(base64/text, max about 1.5MB\).) Tj 0.950 0.950 0.980 rg 56 70.0 500 15.0 re f 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 70.5 Tm (Example: {"appId":"<ObjectId>","type":"bug_report",) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 8 0 R >>
+endobj
+8 0 obj
+<< /Length 3974 >>
+stream
+0.420 0.390 1.000 rg 0 782 612 10 re f 0.420 0.390 1.000 rg 64 46 484 1.5 re f 0.55 0.55 0.65 rg /F1 9 Tf 1 0 0 1 64 30 Tm (KWL-NEXUS Integration Guide  -  Page 2 of 3) Tj BT 0.950 0.950 0.980 rg 56 707.0 500 15.0 re f 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 707.5 Tm ("title":"Crash on export","description":"Steps: ...",) Tj 0.950 0.950 0.980 rg 56 690.0 500 15.0 re f 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 690.5 Tm ("link":"https://...","contactEmail":"user@mail.com"}) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 672.0 Tm (201 returns { data: { id, status } }. Anything else: queue locally) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 648.0 Tm (and retry later - never lose a user report.) Tj 0.420 0.390 1.000 rg /F2 15 Tf 1 0 0 1 64 625.0 Tm (4. Tutorial API - GET /api/apps/<id>/tutorial) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 585.0 Tm (Public endpoint \(no key needed\). Powers the in-app Help view.) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 561.0 Tm (Response data: title, description, videoUrl/videoType \(optional\),) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 542.0 Tm (sections: [{ heading, bodyMarkdown }] \(optional\), appName, appSlug.) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 518.0 Tm (Cache the response on device and show the cached copy offline.) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 499.0 Tm (Refresh in background when online. 404 = no tutorial published yet.) Tj 0.420 0.390 1.000 rg /F2 15 Tf 1 0 0 1 64 476.0 Tm (5. Endpoint reference) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 437.5 Tm (GET  /api/apps  -  List published apps.) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 420.5 Tm (GET  /api/apps/[id]  -  Get one published app by id or slug.) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 403.5 Tm (GET  /api/apps/[id]/plans  -  List active plans for an app.) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 386.5 Tm (GET  /api/apps/popular  -  List most popular apps.) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 369.5 Tm (GET  /api/apps/new-releases  -  List latest new releases.) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 352.5 Tm (GET  /api/public/apps  -  Public app directory \(no auth\).) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 335.5 Tm (GET  /api/apps/[id]/tutorial  -  Get tutorial for an app.) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 318.5 Tm (GET  /api/payment/methods  -  List active payment methods \(filtered HEALTHY\).) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 301.5 Tm (POST  /api/payment/request  -  Create a pending payment request.) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 284.5 Tm (GET  /api/payment/status/[id]  -  Read the authenticated payment status.) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 267.5 Tm (GET  /api/payment/history  -  List authenticated payment history.) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 250.5 Tm (GET  /api/user/profile  -  Read the authenticated user profile.) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 233.5 Tm (GET  /api/user/subscriptions  -  List the authenticated user's subscriptions.) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 216.5 Tm (POST  /api/feedback  -  Submit a user report \(bug/suggestion/feature/rating\).) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 199.5 Tm (GET  /api/feedback  -  List the authenticated user's feedback.) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 182.5 Tm (GET  /api/system-config  -  Get public branding & system config.) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 165.5 Tm (GET  /api/update-guidelines  -  Get latest update guidelines.) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 148.5 Tm (GET  /api/health  -  Health check - keep-alive \(no auth\).) Tj 0.090 0.090 0.180 rg /F1 9.5 Tf 1 0 0 1 64 131.5 Tm (GET  /api/ping  -  Ping - keep-alive alias \(no auth\).) Tj 0.420 0.390 1.000 rg /F2 15 Tf 1 0 0 1 64 109.0 Tm (6. Support) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 69.0 Tm (Lost key? The admin revokes it and generates a new one in seconds:) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 10 0 R >>
+endobj
+10 0 obj
+<< /Length 530 >>
+stream
+0.420 0.390 1.000 rg 0 782 612 10 re f 0.420 0.390 1.000 rg 64 46 484 1.5 re f 0.55 0.55 0.65 rg /F1 9 Tf 1 0 0 1 64 30 Tm (KWL-NEXUS Integration Guide  -  Page 3 of 3) Tj BT 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 706.0 Tm (Admin panel > Settings > Project integrations > API keys.) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 682.0 Tm (Full interactive docs: <domain>/docs \(admin\) + test console.) Tj 0.090 0.090 0.180 rg /F1 11 Tf 1 0 0 1 64 663.0 Tm (Machine-readable spec: /api/docs/openapi and /api/docs/postman.) Tj ET
+endstream
+endobj
+xref
+0 11
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000197 00000 n 
+0000000272 00000 n 
+0000000408 00000 n 
+0000003348 00000 n 
+0000003484 00000 n 
+0000007510 00000 n 
+0000007647 00000 n 
+trailer
+<< /Size 11 /Root 1 0 R >>
+startxref
+8229
+%%EOF
