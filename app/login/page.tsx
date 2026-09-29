@@ -475,7 +475,7 @@ function LoginContent() {
               </p>
             </form>
           ) : (
-            <form onSubmit={isSignup ? handleVerifySignup : handleVerifyLogin} className="space-y-4">
+            <form onSubmit={isSignup ? handleVerifySignup : handleVerifyLogin} className="space-y-4" noValidate>
               <div>
                 <p className="text-sm text-ink/60 dark:text-white/60">
                   Code sent via <b className="text-ink dark:text-white">{channel === "phone" ? "phone" : "email"}</b> to <b className="text-ink dark:text-white">{channel === "phone" ? fullPhone : email}</b>{" "}

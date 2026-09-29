@@ -11,6 +11,8 @@ export function PaymentRequestForm({ appName, amount }: { appName: string; amoun
   const [message, setMessage] = useState("");
   const [methods, setMethods] = useState<{ name: string; slug: string; type: string; provider: string; accountNumber: string; instructions: string }[]>([]);
   const [loadingNumbers, setLoadingNumbers] = useState(true);
+  const [touched, setTouched] = useState(false);
+  const trxError = touched && !transactionId.trim() ? t("transactionIdRequired") : "";
 
   useEffect(() => {
     let cancelled = false;
@@ -68,6 +70,8 @@ export function PaymentRequestForm({ appName, amount }: { appName: string; amoun
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setTouched(true);
+    if (!transactionId.trim()) return;
     try {
       const response = await fetch("/api/payment/request", {
         method: "POST",
@@ -101,7 +105,7 @@ export function PaymentRequestForm({ appName, amount }: { appName: string; amoun
   }
 
   return (
-    <form onSubmit={submit} className="mt-8 rounded-[1.5rem] border border-ink/10 dark:border-white/10 bg-white dark:bg-[#1a1a2e] p-6 shadow-sm">
+    <form onSubmit={submit} noValidate className="mt-8 rounded-[1.5rem] border border-ink/10 dark:border-white/10 bg-white dark:bg-[#1a1a2e] p-6 shadow-sm">
       <h2 className="text-xl font-bold text-ink dark:text-white">{t("payManuallyFor")} {appName}</h2>
       <p className="mt-2 text-sm text-ink/55 dark:text-white/60">{t("payDescSend")} {amount} {t("payDescToNumber")}</p>
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -121,13 +125,14 @@ export function PaymentRequestForm({ appName, amount }: { appName: string; amoun
       <label className="mt-5 block text-sm font-semibold text-ink/60 dark:text-white/60">
         {t("transactionId")}
         <input
-          required
           value={transactionId}
           onChange={(event) => setTransactionId(event.target.value)}
           placeholder={t("enterTransactionId")}
-          className="mt-2 h-11 w-full rounded-xl border border-ink/10 dark:border-white/10 bg-paper dark:bg-white/10 px-4 text-sm text-ink dark:text-white placeholder:text-ink/40 dark:placeholder:text-white/40 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          aria-invalid={Boolean(trxError)}
+          className={`mt-2 h-11 w-full rounded-xl border bg-paper dark:bg-white/10 px-4 text-sm text-ink dark:text-white placeholder:text-ink/40 dark:placeholder:text-white/40 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 ${trxError ? "border-red-400 focus:ring-red-400/20" : "border-ink/10 dark:border-white/10"}`}
         />
       </label>
+      {trxError && <p className="mt-1.5 text-xs font-semibold text-red-500 dark:text-red-400">{trxError}</p>}
       <button className="mt-5 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary/90 transition">{t("submitPaymentRequest")}</button>
       {message && <p className="mt-4 text-sm font-semibold text-[#159570] dark:text-emerald-400">{message}</p>}
     </form>
