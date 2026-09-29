@@ -21,7 +21,8 @@ const updateSchema = z.object({
   category: z.string().min(1).max(60).optional(),
   pricing: z.enum(["free", "paid", "freemium"]).optional(),
   websiteUrl: z.string().url().max(2000).optional().or(z.literal("")),
-  iconUrl: z.string().max(4000).optional().or(z.literal("")),
+  // 700KB: fits a 500KB image as base64 data URL (logo upload), still far under MongoDB limits.
+  iconUrl: z.string().max(700_000).optional().or(z.literal("")),
   latestVersion: z.string().max(40).optional().or(z.literal("")),
   downloadUrl: z
     .object({

@@ -36,6 +36,7 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [form, setForm] = useState({ name: "", description: "", category: "", pricing: "free", websiteUrl: "", iconUrl: "" });
+  const [msgKind, setMsgKind] = useState<"success" | "error" | "">("");
   const [featuresText, setFeaturesText] = useState("");
   const [logoMsg, setLogoMsg] = useState("");
 
@@ -76,6 +77,7 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
     if (!app) return;
     setSaving(true);
     setMsg("");
+    setMsgKind("");
     try {
       const res = await fetch(`/api/admin/apps/${encodeURIComponent(app.slug || app._id)}`, {
         method: "PUT",
@@ -85,9 +87,11 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(typeof j.error === "string" ? j.error : "Save failed");
       setMsg("Details saved.");
+      setMsgKind("success");
       void load();
     } catch (e) {
       setMsg(e instanceof Error ? e.message : "Save failed");
+      setMsgKind("error");
     } finally {
       setSaving(false);
     }
@@ -209,7 +213,7 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
               {logoMsg && <p className="mt-1.5 text-xs font-normal text-emerald-600 dark:text-emerald-400">{logoMsg}</p>}
             </div>
           </div>
-          <div><button disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"><Save size={15} /> {saving ? "Saving…" : "Save details"}</button>{msg && <span className="ml-3 text-sm text-[#159570]">{msg}</span>}</div>
+          <div><button disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"><Save size={15} /> {saving ? "Saving…" : "Save details"}</button>{msg && <span className={`ml-3 text-sm font-semibold ${msgKind === "error" ? "text-red-500 dark:text-red-400" : "text-[#159570] dark:text-emerald-400"}`}>{msg}</span>}</div>
         </form>
       </div>
 
