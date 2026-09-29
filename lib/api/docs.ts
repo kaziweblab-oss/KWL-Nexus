@@ -12,6 +12,8 @@ export const apiEndpoints = [
   { method: "GET", path: "/api/payment/history", description: "List authenticated payment history." },
   { method: "GET", path: "/api/user/profile", description: "Read the authenticated user profile." },
   { method: "GET", path: "/api/user/subscriptions", description: "List the authenticated user's subscriptions." },
+  { method: "POST", path: "/api/feedback", description: "Submit a user report (bug/suggestion/feature/rating)." },
+  { method: "GET", path: "/api/feedback", description: "List the authenticated user's feedback." },
   { method: "GET", path: "/api/system-config", description: "Get public branding & system config." },
   { method: "GET", path: "/api/update-guidelines", description: "Get latest update guidelines." },
   { method: "GET", path: "/api/health", description: "Health check — keep-alive (no auth)." },
