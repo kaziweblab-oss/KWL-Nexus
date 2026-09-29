@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
-import { BadgeCheck, Star, Download, ShieldCheck, Monitor, Smartphone, Terminal, ChevronLeft, ChevronRight, Check, X, Crown, Sparkles, Zap } from "lucide-react";
+import { BadgeCheck, Star, Download, ShieldCheck, Monitor, Smartphone, Terminal, ChevronLeft, ChevronRight, Check, X, Crown, Sparkles, Zap, Image as ImageIcon, ArrowRight } from "lucide-react";
 import { useSession, signIn } from "next-auth/react";
 import { useLanguage } from "@/components/shared/LanguageProvider";
 import { useToast } from "@/components/ui/Toast";
@@ -11,10 +11,10 @@ type Plan = { name: string; price: string; cadence: string; description: string;
 
 const detailCopy = {
   en: {
-    home: "Home", apps: "Apps", verified: "Verified", reviews: "reviews", downloads: "Downloads", safe: "Safe", verifiedBy: "Verified by KWL Nexus", downloadNow: "Download Now", secureDownload: "Secure Download", freePlan: "Free Plan", forever: "Forever", overview: "Overview", features: "Features", screenshots: "Screenshots", changelog: "Changelog", reviewsTab: "Reviews", faq: "FAQ", askAnything: "Ask me anything...", helloAi: "Hello, I'm KWL AI", helpToday: "How can I help you today?", video: "Video", viewAllScreenshots: "View All Screenshots", aboutApp: "About This App", keyFeatures: "Key Features", allScreenshots: "All Screenshots", reviewSoon: "Reviews integration coming soon. Users can leave feedback via the feedback form below.", noFeaturesYet: "No features listed yet.", noChangelogYet: "No changelog entries yet.", faqSoon: "Frequently asked questions will appear here.", secureLogin: "Download requires login", downloadStarted: "Download started", version: "Version", updated: "Updated", size: "Size", category: "Category", developer: "Developer", compatibility: "Compatibility", featureTitles: ["AI Chat", "Summarize", "Translate", "Write Anything", "Code Assistant", "Smart Notes"], featureDescriptions: ["Chat with AI for any question", "Summarize long articles, PDFs, and documents", "Translate text in 100+ languages instantly.", "Generate emails, blogs, reports, and more.", "Write, explain, and debug code with AI.", "Organize notes and ideas in one place."], previewPrompts: ["Summarize", "Write", "Translate", "Code", "Ideas"],
+    home: "Home", apps: "Apps", verified: "Verified", reviews: "reviews", downloads: "Downloads", safe: "Safe", verifiedBy: "Verified by KWL Nexus", downloadNow: "Download Now", secureDownload: "Secure Download", freePlan: "Free Plan", forever: "Forever", overview: "Overview", features: "Features", screenshots: "Screenshots", changelog: "Changelog", reviewsTab: "Reviews", faq: "FAQ", askAnything: "Ask me anything...", helloAi: "Hello, I'm KWL AI", helpToday: "How can I help you today?", video: "Video", viewAllScreenshots: "View All Screenshots", aboutApp: "About This App", keyFeatures: "Key Features", allScreenshots: "All Screenshots", reviewSoon: "Reviews integration coming soon. Users can leave feedback via the feedback form below.", noFeaturesYet: "No features listed yet.", noChangelogYet: "No changelog entries yet.", previewComingSoon: "Preview coming soon", previewComingSoonDesc: "Screenshots and preview video will appear here once added.", addPreview: "Add preview", faqSoon: "Frequently asked questions will appear here.", secureLogin: "Download requires login", downloadStarted: "Download started", version: "Version", updated: "Updated", size: "Size", category: "Category", developer: "Developer", compatibility: "Compatibility", featureTitles: ["AI Chat", "Summarize", "Translate", "Write Anything", "Code Assistant", "Smart Notes"], featureDescriptions: ["Chat with AI for any question", "Summarize long articles, PDFs, and documents", "Translate text in 100+ languages instantly.", "Generate emails, blogs, reports, and more.", "Write, explain, and debug code with AI.", "Organize notes and ideas in one place."], previewPrompts: ["Summarize", "Write", "Translate", "Code", "Ideas"],
   },
   bn: {
-    home: "হোম", apps: "অ্যাপস", verified: "যাচাইকৃত", reviews: "রিভিউ", downloads: "ডাউনলোড", safe: "নিরাপদ", verifiedBy: "KWL Nexus দ্বারা যাচাইকৃত", downloadNow: "এখনই ডাউনলোড", secureDownload: "নিরাপদ ডাউনলোড", freePlan: "ফ্রি প্ল্যান", forever: "চিরস্থায়ী", overview: "সংক্ষিপ্ত বিবরণ", features: "ফিচার", screenshots: "স্ক্রিনশট", changelog: "পরিবর্তন তালিকা", reviewsTab: "রিভিউ", faq: "জিজ্ঞাসা", askAnything: "যেকোনো কিছু জিজ্ঞাসা করুন...", helloAi: "হ্যালো, আমি KWL AI", helpToday: "আজ কীভাবে সাহায্য করতে পারি?", video: "ভিডিও", viewAllScreenshots: "সব স্ক্রিনশট দেখুন", aboutApp: "এই অ্যাপ সম্পর্কে", keyFeatures: "মূল ফিচার", allScreenshots: "সব স্ক্রিনশট", reviewSoon: "রিভিউ সিস্টেম শীঘ্রই আসছে। নিচের ফিডব্যাক ফর্মে মতামত দিতে পারেন।", noFeaturesYet: "এখনো কোনো ফিচার তালিকাভুক্ত হয়নি।", noChangelogYet: "এখনো কোনো চেঞ্জলগ নেই।", faqSoon: "সাধারণ জিজ্ঞাসাগুলো এখানে দেখা যাবে।", secureLogin: "ডাউনলোড করতে লগইন করুন", downloadStarted: "ডাউনলোড শুরু হয়েছে", version: "ভার্সন", updated: "আপডেট", size: "সাইজ", category: "ক্যাটাগরি", developer: "ডেভেলপার", compatibility: "সামঞ্জস্যতা", featureTitles: ["AI চ্যাট", "সারাংশ", "অনুবাদ", "যেকোনো লেখা", "কোড সহকারী", "স্মার্ট নোট"], featureDescriptions: ["যেকোনো প্রশ্নে AI-এর সাথে চ্যাট করুন", "দীর্ঘ আর্টিকেল, PDF ও ডকুমেন্টের সারাংশ তৈরি করুন", "মুহূর্তে ১০০টিরও বেশি ভাষায় অনুবাদ করুন", "ইমেইল, ব্লগ, রিপোর্ট ও আরও অনেক কিছু তৈরি করুন", "AI দিয়ে কোড লিখুন, বুঝুন ও ডিবাগ করুন", "এক জায়গায় নোট ও আইডিয়া সাজান"], previewPrompts: ["সারাংশ", "লেখা", "অনুবাদ", "কোড", "আইডিয়া"],
+    home: "হোম", apps: "অ্যাপস", verified: "যাচাইকৃত", reviews: "রিভিউ", downloads: "ডাউনলোড", safe: "নিরাপদ", verifiedBy: "KWL Nexus দ্বারা যাচাইকৃত", downloadNow: "এখনই ডাউনলোড", secureDownload: "নিরাপদ ডাউনলোড", freePlan: "ফ্রি প্ল্যান", forever: "চিরস্থায়ী", overview: "সংক্ষিপ্ত বিবরণ", features: "ফিচার", screenshots: "স্ক্রিনশট", changelog: "পরিবর্তন তালিকা", reviewsTab: "রিভিউ", faq: "জিজ্ঞাসা", askAnything: "যেকোনো কিছু জিজ্ঞাসা করুন...", helloAi: "হ্যালো, আমি KWL AI", helpToday: "আজ কীভাবে সাহায্য করতে পারি?", video: "ভিডিও", viewAllScreenshots: "সব স্ক্রিনশট দেখুন", aboutApp: "এই অ্যাপ সম্পর্কে", keyFeatures: "মূল ফিচার", allScreenshots: "সব স্ক্রিনশট", reviewSoon: "রিভিউ সিস্টেম শীঘ্রই আসছে। নিচের ফিডব্যাক ফর্মে মতামত দিতে পারেন।", noFeaturesYet: "এখনো কোনো ফিচার তালিকাভুক্ত হয়নি।", noChangelogYet: "এখনো কোনো চেঞ্জলগ নেই।", previewComingSoon: "প্রিভিউ শীঘ্রই আসছে", previewComingSoonDesc: "যোগ করা হলে এখানে স্ক্রিনশট ও প্রিভিউ ভিডিও দেখা যাবে।", addPreview: "প্রিভিউ যোগ করো", faqSoon: "সাধারণ জিজ্ঞাসাগুলো এখানে দেখা যাবে।", secureLogin: "ডাউনলোড করতে লগইন করুন", downloadStarted: "ডাউনলোড শুরু হয়েছে", version: "ভার্সন", updated: "আপডেট", size: "সাইজ", category: "ক্যাটাগরি", developer: "ডেভেলপার", compatibility: "সামঞ্জস্যতা", featureTitles: ["AI চ্যাট", "সারাংশ", "অনুবাদ", "যেকোনো লেখা", "কোড সহকারী", "স্মার্ট নোট"], featureDescriptions: ["যেকোনো প্রশ্নে AI-এর সাথে চ্যাট করুন", "দীর্ঘ আর্টিকেল, PDF ও ডকুমেন্টের সারাংশ তৈরি করুন", "মুহূর্তে ১০০টিরও বেশি ভাষায় অনুবাদ করুন", "ইমেইল, ব্লগ, রিপোর্ট ও আরও অনেক কিছু তৈরি করুন", "AI দিয়ে কোড লিখুন, বুঝুন ও ডিবাগ করুন", "এক জায়গায় নোট ও আইডিয়া সাজান"], previewPrompts: ["সারাংশ", "লেখা", "অনুবাদ", "কোড", "আইডিয়া"],
   },
 } as const;
 
@@ -55,7 +55,8 @@ export function MarketplaceDetailClient({
     { key: "FAQ", label: copy.faq },
   ];
   const platformIcons: Record<string, typeof Monitor> = { Windows: Monitor, macOS: Monitor, Android: Smartphone, Linux: Terminal, iOS: Smartphone };
-  const { status } = useSession();
+  const { data: session, status } = useSession();
+  const isAdmin = Boolean((session?.user as { isAdmin?: boolean } | undefined)?.isAdmin);
   const { showToast } = useToast();
   const handleDownload = (platform?: string) => {
     if (status !== "authenticated") {
@@ -147,25 +148,18 @@ export function MarketplaceDetailClient({
                 <img src={previewImageUrl} alt={`${app.name} preview`} className="h-[220px] w-full object-cover" />
               </div>
             ) : (
-              <div className="rounded-xl bg-[#f8f9ff] p-3 dark:bg-[#0a0a14]">
-                <div className="flex items-center justify-between text-[10px] text-ink/30 dark:text-white/30 px-2">
-                  <span className="flex items-center gap-1"><span className="h-1.5 w-6 rounded-full bg-ink/10 dark:bg-white/10" /> <span className="h-1 w-1 rounded-full bg-ink/20 dark:bg-white/20" /></span>
-                  <span className="text-ink/20 dark:text-white/20">✦</span>
-                </div>
-                <div className="mt-4 flex flex-col items-center gap-2 py-6 text-center">
-                  <p className="text-xs font-semibold text-ink dark:text-white">{copy.helloAi}</p>
-                  <p className="text-xs text-ink/60 dark:text-white/60">{copy.helpToday}</p>
-                  <div className="mt-3 flex w-full items-center gap-2 rounded-full border border-ink/10 bg-white px-3 py-2 text-xs text-ink/40 dark:border-white/10 dark:bg-white/5 dark:text-white/40">
-                    <span className="flex-1 text-left">{copy.askAnything}</span>
-                    <span className="grid h-6 w-6 place-items-center rounded-full bg-[#6C63FF] text-white"><ChevronRight size={12} /></span>
-                  </div>
-                  <div className="mt-3 flex flex-wrap justify-center gap-1.5">
-                      {copy.previewPrompts.map((t) => (
-                      <span key={t} className="rounded-full border border-ink/10 bg-white px-2.5 py-1 text-[10px] text-ink/50 dark:border-white/10 dark:bg-white/5 dark:text-white/50">
-                        {t}
-                      </span>
-                    ))}
-                  </div>
+              <div className="rounded-xl border-2 border-dashed border-ink/15 p-3 dark:border-white/10 dark:bg-[#0a0a14]">
+                <div className="flex flex-col items-center gap-2 px-2 py-10 text-center">
+                  <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary dark:text-secondary">
+                    <ImageIcon size={22} />
+                  </span>
+                  <p className="text-sm font-bold text-ink dark:text-white">{copy.previewComingSoon}</p>
+                  <p className="max-w-[220px] text-xs leading-5 text-ink/50 dark:text-white/50">{copy.previewComingSoonDesc}</p>
+                  {isAdmin && (
+                    <Link href={`/admin/apps/${app.id}/edit`} className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary/90">
+                      {copy.addPreview} <ArrowRight size={12} />
+                    </Link>
+                  )}
                 </div>
               </div>
             )}
