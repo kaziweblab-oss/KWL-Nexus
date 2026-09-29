@@ -88,3 +88,36 @@ export function detectPlatform(filename: string) {
   if (lower.endsWith(".deb")) return "Linux";
   return "Other";
 }
+
+// All configured tokens (unique, in priority order). A stale/invalid token in one
+// slot must not shadow a working token in another — callers retry on 401.
+export async function getGithubTokenCandidates(oauthToken?: string | null): Promise<string[]> {
+  const out: string[] = [];
+  const push = (t?: string | null) => { const v = t?.trim(); if (v && !out.includes(v)) out.push(v); };
+  try {
+    const { connectToDatabase } = await import("@/lib/db/connect");
+    await connectToDatabase();
+    const SystemConfig = (await import("@/models/SystemConfig")).default;
+    const cfg = await SystemConfig.findOne().select("+githubToken").lean() as unknown as { githubToken?: string } | null;
+    if (cfg?.githubToken) push(decryptToken(cfg.githubToken));
+  } catch {}
+  try { push(await getConfiguredGithubIntegrationToken()); } catch {}
+  push(process.env.GITHUB_TOKEN);
+  push(oauthToken);
+  return out;
+}
+
+// Try each token until one works; only 401 responses trigger a retry with the next token.
+export async function githubFetchFirst<T>(path: string, tokens: string[]): Promise<T> {
+  let lastError: unknown = new Error("GitHub API returned 401");
+  for (const token of tokens) {
+    try {
+      return await githubFetch<T>(path, token);
+    } catch (error) {
+      lastError = error;
+      const msg = error instanceof Error ? error.message : "";
+      if (!msg.includes("401")) throw error;
+    }
+  }
+  throw lastError;
+}

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { isAdmin } from "@/lib/auth/admin";
-import { githubFetch, getEffectiveGithubToken } from "@/lib/github/client";
+import { githubFetchFirst, getGithubTokenCandidates } from "@/lib/github/client";
 
 type Release = {
   id: number;
@@ -21,10 +21,10 @@ export async function GET(request: Request, { params }: { params: { owner: strin
   const jwt = await getToken({ req: request as never, secret: process.env.NEXTAUTH_SECRET });
   const email = typeof jwt?.email === "string" ? jwt.email : null;
   if (!email || !(await isAdmin(email))) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-  const token = await getEffectiveGithubToken(typeof jwt?.githubAccessToken === "string" ? jwt.githubAccessToken : null);
-  if (!token) return NextResponse.json({ error: "GitHub PAT not configured" }, { status: 401 });
+  const tokens = await getGithubTokenCandidates(typeof jwt?.githubAccessToken === "string" ? jwt.githubAccessToken : null);
+  if (!tokens.length) return NextResponse.json({ error: "GitHub PAT not configured" }, { status: 401 });
   try {
-    const releases = await githubFetch<Release[]>(`/repos/${params.owner}/${params.repo}/releases?per_page=20`, token);
+    const releases = await githubFetchFirst<Release[]>(`/repos/${params.owner}/${params.repo}/releases?per_page=20`, tokens);
     // Return lightweight mapped releases for admin UI
     const data = releases.map((r) => ({
       id: r.id,
