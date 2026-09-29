@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Loader2, Rocket, Save } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2, Rocket, Save } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useToast } from "@/components/ui/Toast";
 import { TutorialEditor } from "@/components/admin/TutorialEditor";
 import { AppMediaManager } from "@/components/admin/AppMediaManager";
 import { AppReleaseManager } from "@/components/admin/AppReleaseManager";
@@ -28,7 +29,7 @@ type AppDoc = {
 // DB-driven editor: details + GitHub releases + publish + media + tutorial.
 // (Previously read the dummy catalog, so imported drafts hit 404.)
 export default function AdminAppEditPage({ params }: { params: { id: string } }) {
-  const [app, setApp] = useState<AppDoc | null>(null);
+  const { showToast } = useToast();  const [app, setApp] = useState<AppDoc | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -78,17 +79,21 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
 
   async function togglePublish() {
     if (!app) return;
+    const next = !app.isPublished;
     setSaving(true);
     try {
       const res = await fetch(`/api/admin/apps/${encodeURIComponent(app.slug || app._id)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isPublished: !app.isPublished }),
+        body: JSON.stringify({ isPublished: next }),
       });
       if (!res.ok) throw new Error("Failed");
-      setApp({ ...app, isPublished: !app.isPublished });
+      setApp({ ...app, isPublished: next });
+      showToast(next ? "Published! App is now live in the store." : "Unpublished. App is back to draft.", next ? "success" : "warning");
     } catch {
-      setMsg("Publish toggle failed — set a version + download URL first, then retry.");
+      const message = "Publish toggle failed — set a version + download URL first, then retry.";
+      setMsg(message);
+      showToast(message, "error");
     } finally {
       setSaving(false);
     }
@@ -120,10 +125,17 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
           <Rocket size={15} /> {app.isPublished ? "Unpublish" : "Publish"}
         </button>
       </div>
-      {!app.isPublished && (
+      {!app.isPublished ? (
         <p className="mt-4 rounded-xl border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
           Draft — invisible in store. Flow: pick a release below (sets version + .apk/.exe/.deb) → save details → Publish.
           {app.latestVersion ? ` Current version: v${app.latestVersion}.` : " No version yet."}
+        </p>
+      ) : (
+        <p className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+          <span>Live in store{app.latestVersion ? ` · v${app.latestVersion}` : ""}.</span>
+          <Link href={`/apps/${app.slug || app._id}`} className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-emerald-700">
+            View in store <ExternalLink size={12} />
+          </Link>
         </p>
       )}
 
