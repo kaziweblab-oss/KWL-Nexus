@@ -11,10 +11,10 @@ type Plan = { name: string; price: string; cadence: string; description: string;
 
 const detailCopy = {
   en: {
-    home: "Home", apps: "Apps", verified: "Verified", reviews: "reviews", downloads: "Downloads", safe: "Safe", verifiedBy: "Verified by KWL Nexus", downloadNow: "Download Now", secureDownload: "Secure Download", freePlan: "Free Plan", forever: "Forever", overview: "Overview", features: "Features", screenshots: "Screenshots", changelog: "Changelog", reviewsTab: "Reviews", faq: "FAQ", askAnything: "Ask me anything...", helloAi: "Hello, I'm KWL AI", helpToday: "How can I help you today?", video: "Video", viewAllScreenshots: "View All Screenshots", aboutApp: "About This App", keyFeatures: "Key Features", allScreenshots: "All Screenshots", reviewSoon: "Reviews integration coming soon. Users can leave feedback via the feedback form below.", noFeaturesYet: "No features listed yet.", noChangelogYet: "No changelog entries yet.", previewComingSoon: "Preview coming soon", previewComingSoonDesc: "Screenshots and preview video will appear here once added.", addPreview: "Add preview", faqSoon: "Frequently asked questions will appear here.", secureLogin: "Download requires login", downloadStarted: "Download started", version: "Version", updated: "Updated", size: "Size", category: "Category", developer: "Developer", compatibility: "Compatibility", featureTitles: ["AI Chat", "Summarize", "Translate", "Write Anything", "Code Assistant", "Smart Notes"], featureDescriptions: ["Chat with AI for any question", "Summarize long articles, PDFs, and documents", "Translate text in 100+ languages instantly.", "Generate emails, blogs, reports, and more.", "Write, explain, and debug code with AI.", "Organize notes and ideas in one place."], previewPrompts: ["Summarize", "Write", "Translate", "Code", "Ideas"],
+    home: "Home", apps: "Apps", verified: "Verified", reviews: "reviews", downloads: "Downloads", safe: "Safe", verifiedBy: "Verified by KWL Nexus", downloadNow: "Download Now", secureDownload: "Secure Download", freePlan: "Free Plan", forever: "Forever", overview: "Overview", features: "Features", screenshots: "Screenshots", changelog: "Changelog", reviewsTab: "Reviews", faq: "FAQ", askAnything: "Ask me anything...", helloAi: "Hello, I'm KWL AI", helpToday: "How can I help you today?", video: "Video", viewAllScreenshots: "View All Screenshots", aboutApp: "About This App", keyFeatures: "Key Features", allScreenshots: "All Screenshots", reviewSoon: "Reviews integration coming soon. Users can leave feedback via the feedback form below.", noFeaturesYet: "No features listed yet.", noChangelogYet: "No changelog entries yet.", previewComingSoon: "Preview coming soon", previewComingSoonDesc: "Screenshots and preview video will appear here once added.", addPreview: "Add preview", noScreenshotsYet: "No screenshots yet", noScreenshotsDesc: "Add screenshots from the app editor to showcase this app.", addScreenshots: "Add screenshots", faqSoon: "Frequently asked questions will appear here.", secureLogin: "Download requires login", downloadStarted: "Download started", version: "Version", updated: "Updated", size: "Size", category: "Category", developer: "Developer", compatibility: "Compatibility", featureTitles: ["AI Chat", "Summarize", "Translate", "Write Anything", "Code Assistant", "Smart Notes"], featureDescriptions: ["Chat with AI for any question", "Summarize long articles, PDFs, and documents", "Translate text in 100+ languages instantly.", "Generate emails, blogs, reports, and more.", "Write, explain, and debug code with AI.", "Organize notes and ideas in one place."], previewPrompts: ["Summarize", "Write", "Translate", "Code", "Ideas"],
   },
   bn: {
-    home: "হোম", apps: "অ্যাপস", verified: "যাচাইকৃত", reviews: "রিভিউ", downloads: "ডাউনলোড", safe: "নিরাপদ", verifiedBy: "KWL Nexus দ্বারা যাচাইকৃত", downloadNow: "এখনই ডাউনলোড", secureDownload: "নিরাপদ ডাউনলোড", freePlan: "ফ্রি প্ল্যান", forever: "চিরস্থায়ী", overview: "সংক্ষিপ্ত বিবরণ", features: "ফিচার", screenshots: "স্ক্রিনশট", changelog: "পরিবর্তন তালিকা", reviewsTab: "রিভিউ", faq: "জিজ্ঞাসা", askAnything: "যেকোনো কিছু জিজ্ঞাসা করুন...", helloAi: "হ্যালো, আমি KWL AI", helpToday: "আজ কীভাবে সাহায্য করতে পারি?", video: "ভিডিও", viewAllScreenshots: "সব স্ক্রিনশট দেখুন", aboutApp: "এই অ্যাপ সম্পর্কে", keyFeatures: "মূল ফিচার", allScreenshots: "সব স্ক্রিনশট", reviewSoon: "রিভিউ সিস্টেম শীঘ্রই আসছে। নিচের ফিডব্যাক ফর্মে মতামত দিতে পারেন।", noFeaturesYet: "এখনো কোনো ফিচার তালিকাভুক্ত হয়নি।", noChangelogYet: "এখনো কোনো চেঞ্জলগ নেই।", previewComingSoon: "প্রিভিউ শীঘ্রই আসছে", previewComingSoonDesc: "যোগ করা হলে এখানে স্ক্রিনশট ও প্রিভিউ ভিডিও দেখা যাবে।", addPreview: "প্রিভিউ যোগ করো", faqSoon: "সাধারণ জিজ্ঞাসাগুলো এখানে দেখা যাবে।", secureLogin: "ডাউনলোড করতে লগইন করুন", downloadStarted: "ডাউনলোড শুরু হয়েছে", version: "ভার্সন", updated: "আপডেট", size: "সাইজ", category: "ক্যাটাগরি", developer: "ডেভেলপার", compatibility: "সামঞ্জস্যতা", featureTitles: ["AI চ্যাট", "সারাংশ", "অনুবাদ", "যেকোনো লেখা", "কোড সহকারী", "স্মার্ট নোট"], featureDescriptions: ["যেকোনো প্রশ্নে AI-এর সাথে চ্যাট করুন", "দীর্ঘ আর্টিকেল, PDF ও ডকুমেন্টের সারাংশ তৈরি করুন", "মুহূর্তে ১০০টিরও বেশি ভাষায় অনুবাদ করুন", "ইমেইল, ব্লগ, রিপোর্ট ও আরও অনেক কিছু তৈরি করুন", "AI দিয়ে কোড লিখুন, বুঝুন ও ডিবাগ করুন", "এক জায়গায় নোট ও আইডিয়া সাজান"], previewPrompts: ["সারাংশ", "লেখা", "অনুবাদ", "কোড", "আইডিয়া"],
+    home: "হোম", apps: "অ্যাপস", verified: "যাচাইকৃত", reviews: "রিভিউ", downloads: "ডাউনলোড", safe: "নিরাপদ", verifiedBy: "KWL Nexus দ্বারা যাচাইকৃত", downloadNow: "এখনই ডাউনলোড", secureDownload: "নিরাপদ ডাউনলোড", freePlan: "ফ্রি প্ল্যান", forever: "চিরস্থায়ী", overview: "সংক্ষিপ্ত বিবরণ", features: "ফিচার", screenshots: "স্ক্রিনশট", changelog: "পরিবর্তন তালিকা", reviewsTab: "রিভিউ", faq: "জিজ্ঞাসা", askAnything: "যেকোনো কিছু জিজ্ঞাসা করুন...", helloAi: "হ্যালো, আমি KWL AI", helpToday: "আজ কীভাবে সাহায্য করতে পারি?", video: "ভিডিও", viewAllScreenshots: "সব স্ক্রিনশট দেখুন", aboutApp: "এই অ্যাপ সম্পর্কে", keyFeatures: "মূল ফিচার", allScreenshots: "সব স্ক্রিনশট", reviewSoon: "রিভিউ সিস্টেম শীঘ্রই আসছে। নিচের ফিডব্যাক ফর্মে মতামত দিতে পারেন।", noFeaturesYet: "এখনো কোনো ফিচার তালিকাভুক্ত হয়নি।", noChangelogYet: "এখনো কোনো চেঞ্জলগ নেই।", previewComingSoon: "প্রিভিউ শীঘ্রই আসছে", previewComingSoonDesc: "যোগ করা হলে এখানে স্ক্রিনশট ও প্রিভিউ ভিডিও দেখা যাবে।", addPreview: "প্রিভিউ যোগ করো", noScreenshotsYet: "এখনো স্ক্রিনশট নেই", noScreenshotsDesc: "এই অ্যাপ দেখাতে অ্যাপ এডিটর থেকে স্ক্রিনশট যোগ করো।", addScreenshots: "স্ক্রিনশট যোগ করো", faqSoon: "সাধারণ জিজ্ঞাসাগুলো এখানে দেখা যাবে।", secureLogin: "ডাউনলোড করতে লগইন করুন", downloadStarted: "ডাউনলোড শুরু হয়েছে", version: "ভার্সন", updated: "আপডেট", size: "সাইজ", category: "ক্যাটাগরি", developer: "ডেভেলপার", compatibility: "সামঞ্জস্যতা", featureTitles: ["AI চ্যাট", "সারাংশ", "অনুবাদ", "যেকোনো লেখা", "কোড সহকারী", "স্মার্ট নোট"], featureDescriptions: ["যেকোনো প্রশ্নে AI-এর সাথে চ্যাট করুন", "দীর্ঘ আর্টিকেল, PDF ও ডকুমেন্টের সারাংশ তৈরি করুন", "মুহূর্তে ১০০টিরও বেশি ভাষায় অনুবাদ করুন", "ইমেইল, ব্লগ, রিপোর্ট ও আরও অনেক কিছু তৈরি করুন", "AI দিয়ে কোড লিখুন, বুঝুন ও ডিবাগ করুন", "এক জায়গায় নোট ও আইডিয়া সাজান"], previewPrompts: ["সারাংশ", "লেখা", "অনুবাদ", "কোড", "আইডিয়া"],
   },
 } as const;
 
@@ -49,7 +49,7 @@ export function MarketplaceDetailClient({
   const tabs = [
     { key: "Overview", label: copy.overview },
     { key: "Features", label: copy.features },
-    { key: "Screenshots", label: copy.screenshots, badge: String(screenshots.length) },
+    { key: "Screenshots", label: copy.screenshots, badge: screenshots.length ? String(screenshots.length) : undefined },
     { key: "Changelog", label: copy.changelog },
     { key: "Reviews", label: copy.reviewsTab, badge: String(reviewCount ?? 0) },
     { key: "FAQ", label: copy.faq },
@@ -367,8 +367,8 @@ export function MarketplaceDetailClient({
         </section>
       )}
 
-      {/* Screenshots - video first, functional - tab controlled */}
-      {(activeTab === "Overview" || activeTab === "Screenshots") && (
+      {/* Screenshots - hidden when empty for users; admin sees a placeholder with editor link */}
+      {(activeTab === "Overview" || activeTab === "Screenshots") && screenshots.length > 0 && (
         <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 mt-6 rounded-2xl border border-ink/10 bg-white p-5 dark:border-white/5 dark:bg-[#131a2e]">
         <h2 className="text-sm font-bold text-ink dark:text-white">{copy.screenshots}</h2>
         <div className="relative mt-4 px-8">
@@ -397,10 +397,10 @@ export function MarketplaceDetailClient({
               );
             })}
           </div>
-          <button aria-label="Previous" onClick={() => screenshotRef.current?.scrollBy({ left: -320, behavior: "smooth" })} className="absolute left-0 top-1/2 z-10 grid h-9 w-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-white bg-white text-ink shadow-lg ring-1 ring-ink/10 hover:bg-slate-50 dark:border-white/20 dark:bg-[#1a1a2e] dark:text-white dark:ring-white/10 dark:hover:bg-white/10">
+          <button aria-label="Previous" disabled={screenshots.length <= 1} onClick={() => screenshotRef.current?.scrollBy({ left: -320, behavior: "smooth" })} className="absolute left-0 top-1/2 z-10 grid h-9 w-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-white bg-white text-ink shadow-lg ring-1 ring-ink/10 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30 dark:border-white/20 dark:bg-[#1a1a2e] dark:text-white dark:ring-white/10 dark:hover:bg-white/10">
             <ChevronLeft size={16} />
           </button>
-          <button aria-label="Next" onClick={() => screenshotRef.current?.scrollBy({ left: 320, behavior: "smooth" })} className="absolute right-0 top-1/2 z-10 grid h-9 w-9 translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-white bg-white text-ink shadow-lg ring-1 ring-ink/10 hover:bg-slate-50 dark:border-white/20 dark:bg-[#1a1a2e] dark:text-white dark:ring-white/10 dark:hover:bg-white/10">
+          <button aria-label="Next" disabled={screenshots.length <= 1} onClick={() => screenshotRef.current?.scrollBy({ left: 320, behavior: "smooth" })} className="absolute right-0 top-1/2 z-10 grid h-9 w-9 translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-white bg-white text-ink shadow-lg ring-1 ring-ink/10 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30 dark:border-white/20 dark:bg-[#1a1a2e] dark:text-white dark:ring-white/10 dark:hover:bg-white/10">
             <ChevronRight size={16} />
           </button>
         </div>
@@ -408,6 +408,21 @@ export function MarketplaceDetailClient({
           <button onClick={() => setShowAllScreenshots(true)} className="rounded-full border border-ink/10 bg-white px-4 py-1.5 text-xs font-semibold text-ink hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white cursor-pointer">{copy.viewAllScreenshots}</button>
         </div>
       </section>
+      )}
+      {(activeTab === "Overview" || activeTab === "Screenshots") && screenshots.length === 0 && isAdmin && (
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 mt-6 rounded-2xl border-2 border-dashed border-ink/15 bg-white p-5 dark:border-white/10 dark:bg-[#131a2e]">
+          <h2 className="text-sm font-bold text-ink dark:text-white">{copy.screenshots}</h2>
+          <div className="mt-4 flex flex-col items-center gap-2 py-8 text-center">
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary dark:text-secondary">
+              <ImageIcon size={22} />
+            </span>
+            <p className="text-sm font-bold text-ink dark:text-white">{copy.noScreenshotsYet}</p>
+            <p className="max-w-[260px] text-xs leading-5 text-ink/50 dark:text-white/50">{copy.noScreenshotsDesc}</p>
+            <Link href={`/admin/apps/${app.id}/edit`} className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary/90">
+              {copy.addScreenshots} <ArrowRight size={12} />
+            </Link>
+          </div>
+        </section>
       )}
 
       {/* All Screenshots Modal */}
