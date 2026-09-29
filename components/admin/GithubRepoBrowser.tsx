@@ -38,7 +38,22 @@ function logoCandidates(owner: string, fullName: string, branch: string, configI
   const out: string[] = [];
   if (configIcon) out.push(configIcon);
   const base = `https://raw.githubusercontent.com/${fullName}/${branch}`;
-  for (const p of ["icon.png", "logo.png", "assets/icon.png", "assets/logo.png", "src-tauri/icons/128x128.png", "src-tauri/icons/icon.png", "public/icon.png", "public/logo.png"]) {
+  for (const p of [
+    "apps/desktop/public/kwl-logo.png",
+    "apps/desktop/public/icon.png",
+    "apps/android/public/kwl-logo.png",
+    "apps/android/public/icon.png",
+    "apps/desktop/src-tauri/icons/128x128.png",
+    "apps/desktop/src-tauri/icons/icon.png",
+    "icon.png",
+    "logo.png",
+    "assets/icon.png",
+    "assets/logo.png",
+    "src-tauri/icons/128x128.png",
+    "src-tauri/icons/icon.png",
+    "public/icon.png",
+    "public/logo.png",
+  ]) {
     out.push(`${base}/${p}`);
   }
   return out;

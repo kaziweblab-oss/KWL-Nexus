@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { BadgeCheck, Star, Download, ShieldCheck, Monitor, ChevronLeft, ChevronRight, ChevronDown, Check, X, Crown, Sparkles, Zap, Image as ImageIcon, ArrowRight } from "lucide-react";
+import { BadgeCheck, Star, Download, ShieldCheck, ChevronLeft, ChevronRight, Check, X, Crown, Sparkles, Zap, Image as ImageIcon, ArrowRight } from "lucide-react";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 import { useSession, signIn } from "next-auth/react";
 import { useLanguage } from "@/components/shared/LanguageProvider";
 import { useToast } from "@/components/ui/Toast";
@@ -149,19 +150,14 @@ export function MarketplaceDetailClient({
                 <>
                   <label className="block text-xs font-semibold text-ink/60 dark:text-white/60">
                     Platform
-                    <span className="relative mt-1.5 block">
-                      <select
+                    <div className="mt-1.5">
+                      <CustomSelect
                         value={dlPlatform}
-                        onChange={(e) => setDlPlatform(e.target.value)}
-                        className="h-11 w-full appearance-none rounded-xl border border-ink/10 bg-white pl-10 pr-9 text-sm font-semibold text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
-                      >
-                        {app.platforms.map((p) => (
-                          <option key={p} value={p} className="bg-white text-ink dark:bg-[#1a1a2e] dark:text-white">{p}</option>
-                        ))}
-                      </select>
-                      <Monitor size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/40 dark:text-white/40" />
-                      <ChevronDown size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink/40 dark:text-white/40" />
-                    </span>
+                        options={app.platforms.map((p) => ({ value: p, label: p }))}
+                        onChange={setDlPlatform}
+                        placeholder="Select platform"
+                      />
+                    </div>
                   </label>
                   <button
                     onClick={() => void handleDownload(dlPlatform)}

@@ -37,6 +37,19 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
   const [msg, setMsg] = useState("");
   const [form, setForm] = useState({ name: "", description: "", category: "", pricing: "free", websiteUrl: "", iconUrl: "" });
   const [featuresText, setFeaturesText] = useState("");
+  const [logoMsg, setLogoMsg] = useState("");
+
+  function handleLogoFile(file: File | undefined) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { setLogoMsg("Only image files (png/jpg/webp/ico)."); return; }
+    if (file.size > 500_000) { setLogoMsg("Logo max 500KB — compress and retry."); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm((cur) => ({ ...cur, iconUrl: String(reader.result) }));
+      setLogoMsg(`Loaded ${file.name} — Save details to apply.`);
+    };
+    reader.readAsDataURL(file);
+  }
 
   async function load() {
     try {
@@ -181,7 +194,20 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm font-semibold text-ink/60 dark:text-white/60">Website URL<input value={form.websiteUrl} onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })} placeholder="https://…" className="mt-2 h-11 w-full rounded-xl border border-ink/10 bg-paper px-4 text-sm text-ink outline-none dark:border-white/10 dark:bg-white/5 dark:text-white" /></label>
-            <label className="block text-sm font-semibold text-ink/60 dark:text-white/60">Icon URL<input value={form.iconUrl} onChange={(e) => setForm({ ...form, iconUrl: e.target.value })} placeholder="https://…" className="mt-2 h-11 w-full rounded-xl border border-ink/10 bg-paper px-4 text-sm text-ink outline-none dark:border-white/10 dark:bg-white/5 dark:text-white" /></label>
+            <div className="text-sm font-semibold text-ink/60 dark:text-white/60">
+              <p>App logo</p>
+              <div className="mt-2 flex items-center gap-3">
+                <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-primary/10 text-lg font-bold text-primary">
+                  {form.iconUrl ? <img src={form.iconUrl} alt="logo preview" className="h-full w-full object-cover" /> : app.name.slice(0, 1).toUpperCase()}
+                </span>
+                <label className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-ink/10 bg-paper px-4 text-sm text-ink hover:border-primary/40 dark:border-white/10 dark:bg-white/5 dark:text-white">
+                  Upload image
+                  <input type="file" accept="image/*,.ico" className="hidden" onChange={(e) => handleLogoFile(e.target.files?.[0])} />
+                </label>
+              </div>
+              <input value={form.iconUrl.startsWith("data:") ? "" : form.iconUrl} onChange={(e) => { setForm({ ...form, iconUrl: e.target.value }); setLogoMsg(""); }} placeholder="…or paste logo URL" className="mt-2 h-11 w-full rounded-xl border border-ink/10 bg-paper px-4 text-sm font-normal text-ink outline-none dark:border-white/10 dark:bg-white/5 dark:text-white" />
+              {logoMsg && <p className="mt-1.5 text-xs font-normal text-emerald-600 dark:text-emerald-400">{logoMsg}</p>}
+            </div>
           </div>
           <div><button disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"><Save size={15} /> {saving ? "Saving…" : "Save details"}</button>{msg && <span className="ml-3 text-sm text-[#159570]">{msg}</span>}</div>
         </form>
