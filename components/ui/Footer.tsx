@@ -163,7 +163,7 @@ export function Footer() {
               )}
               <Link href="/privacy" className="text-ink/70 hover:text-primary dark:text-white/60 dark:hover:text-secondary transition hover:translate-x-0.5">{t("privacyPolicy")}</Link>
               <Link href="/terms" className="text-ink/70 hover:text-primary dark:text-white/60 dark:hover:text-secondary transition hover:translate-x-0.5">{t("terms")}</Link>
-              <Link href="/docs" className="text-ink/70 hover:text-primary dark:text-white/60 dark:hover:text-secondary transition hover:translate-x-0.5">Docs</Link>
+              {admin && <Link href="/docs" className="text-ink/70 hover:text-primary dark:text-white/60 dark:hover:text-secondary transition hover:translate-x-0.5">Docs</Link>}
             </div>
           </div>
 

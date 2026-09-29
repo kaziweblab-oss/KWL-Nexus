@@ -17,11 +17,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/api/auth/signin?callbackUrl=/dashboard", request.url));
   }
 
-  // 3) Admin / Developers protection (env + DB via JWT)
-  if (pathname.startsWith("/admin") || pathname.startsWith("/developers")) {
+  // 3) Admin / Developers / Docs protection (env + DB via JWT)
+  if (pathname.startsWith("/admin") || pathname.startsWith("/developers") || pathname.startsWith("/docs")) {
     const isDevelopers = pathname.startsWith("/developers");
+    const isDocs = pathname.startsWith("/docs");
     if (!token) {
-      const cb = isDevelopers ? "/developers" : "/admin";
+      const cb = isDevelopers ? "/developers" : isDocs ? "/docs" : "/admin";
       return NextResponse.redirect(new URL(`/api/auth/signin?callbackUrl=${cb}`, request.url));
     }
     const email = typeof token?.email === "string" ? token.email.toLowerCase() : "";
@@ -35,4 +36,4 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-export const config = { matcher: ["/admin/:path*", "/developers/:path*", "/developers", "/login", "/dashboard/:path*", "/dashboard"] };
+export const config = { matcher: ["/admin/:path*", "/developers/:path*", "/developers", "/docs/:path*", "/docs", "/login", "/dashboard/:path*", "/dashboard"] };
