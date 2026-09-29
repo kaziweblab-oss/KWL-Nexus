@@ -26,7 +26,7 @@ export function MarketplaceDetailClient({
   previewVideoUrl,
   reviewCount,
 }: {
-  app: { id: string; name: string; category: string; icon: string; accent: string; rating: string; downloads: string; description: string; longDescription: string; platforms: string[]; features?: string[]; versions?: { version: string; date: string; notes: string }[] };
+  app: { id: string; name: string; category: string; icon: string; accent: string; rating: string; downloads: string; description: string; longDescription: string; platforms: string[]; downloadUrls?: { android?: string; windows?: string; linux?: string }; features?: string[]; versions?: { version: string; date: string; notes: string }[] };
   plans: Plan[];
   screenshots: string[];
   previewImageUrl?: string;
@@ -63,7 +63,7 @@ export function MarketplaceDetailClient({
   const platformIcons: Record<string, typeof Monitor> = { Windows: Monitor, macOS: Monitor, Android: Smartphone, Linux: Terminal, iOS: Smartphone };
   const { status } = useSession();
   const { showToast } = useToast();
-  const handleDownload = () => {
+  const handleDownload = (platform?: string) => {
     if (status !== "authenticated") {
       showToast(copy.secureLogin, "warning");
       signIn("google");
@@ -71,7 +71,7 @@ export function MarketplaceDetailClient({
     }
     // trigger download via API or show toast
     showToast(copy.downloadStarted, "info");
-    window.location.assign(`/api/apps/${app.id}/download`);
+    window.location.assign(`/api/apps/${app.id}/download${platform ? `?platform=${platform.toLowerCase()}` : ""}`);
   };
 
   return (
@@ -115,16 +115,26 @@ export function MarketplaceDetailClient({
             </div>
             <p className="mt-4 text-sm leading-6 text-ink/60 dark:text-white/60">{app.description} Your intelligent productivity companion for everyday tasks. Chat with AI, summarize content, translate, generate ideas, manage notes and more — all in one powerful assistant.</p>
             <div className="mt-4 flex flex-wrap gap-2">
-              {["Windows", "macOS", "Android", "Linux"].map((p) => {
+              {(["Windows", "Android", "Linux"] as const).map((p) => {
                 const Icon = platformIcons[p] ?? Monitor;
-                const active = app.platforms.includes(p);
+                const available = app.platforms.includes(p);
+                const title = available ? `Download for ${p}` : `${p} build not published yet`;
                 return (
-                  <Link key={p} href={`/apps?platform=${p}`} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition hover:scale-105 ${active ? "border-ink/10 bg-white text-ink/70 dark:border-white/10 dark:bg-white/5 dark:text-white/70 hover:bg-paper dark:hover:bg-white/10" : "border-ink/5 bg-white/50 text-ink/30 dark:border-white/5 dark:bg-white/[0.03] dark:text-white/30 hover:bg-white dark:hover:bg-white/5"}`}>
+                  <button
+                    key={p}
+                    type="button"
+                    title={title}
+                    aria-label={title}
+                    disabled={!available}
+                    onClick={() => handleDownload(p)}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition hover:scale-105 ${available ? "border-ink/10 bg-white text-ink/70 dark:border-white/10 dark:bg-white/5 dark:text-white/70 hover:bg-paper dark:hover:bg-white/10" : "cursor-not-allowed border-ink/5 bg-white/50 text-ink/30 dark:border-white/5 dark:bg-white/[0.03] dark:text-white/30"}`}
+                  >
                     <Icon size={13} /> {p}
-                  </Link>
+                  </button>
                 );
               })}
             </div>
+            {app.platforms.length > 0 && <p className="mt-2 text-[11px] text-ink/40 dark:text-white/30">Tap a highlighted platform to download its build.</p>}
           </div>
 
           {/* Center: Preview - static single, admin editable (image or video) */}
@@ -181,7 +191,7 @@ export function MarketplaceDetailClient({
               <span className="text-2xl font-bold text-ink dark:text-white">{plans[0]?.price ?? "Free"}</span>
               <span className="text-xs text-ink/40 dark:text-white/40">{plans[0]?.cadence ?? copy.forever}</span>
             </div>
-            <button onClick={handleDownload} className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#8b5cf6] to-[#3b82f6] py-2.5 text-sm font-semibold text-white shadow-md hover:shadow-lg transition cursor-pointer">
+            <button onClick={() => handleDownload()} className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#8b5cf6] to-[#3b82f6] py-2.5 text-sm font-semibold text-white shadow-md hover:shadow-lg transition cursor-pointer">
               <Download size={14} /> {copy.downloadNow} <Download size={14} />
             </button>
             <p className="mt-2 flex items-center justify-center gap-1 text-[10px] text-ink/40 dark:text-white/30"><ShieldCheck size={10} /> {copy.secureDownload}</p>

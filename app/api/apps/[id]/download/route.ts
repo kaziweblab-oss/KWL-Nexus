@@ -17,6 +17,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
   const url = new URL(request.url);
   const asset = url.searchParams.get("asset"); // optional specific asset name
   const tag = url.searchParams.get("tag");
+  const platform = url.searchParams.get("platform"); // android | windows | linux
 
   await connectToDatabase();
 
@@ -69,6 +70,14 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
   // Fallback: stored downloadUrl in App model
   const stored = (app as unknown as { downloadUrl?: { android?: string; windows?: string; linux?: string } })?.downloadUrl;
+  // Explicit platform choice wins (admin-curated per-platform build).
+  if (platform && stored) {
+    const key = platform.toLowerCase() as keyof NonNullable<typeof stored>;
+    if (["android", "windows", "linux"].includes(key) && stored[key]) {
+      return NextResponse.json({ downloadUrl: stored[key], version: (app as unknown as { latestVersion?: string }).latestVersion ?? "1.0.0", platform: key });
+    }
+    return NextResponse.json({ error: `No ${platform} build published for this app yet.` }, { status: 404 });
+  }
   const fallback = stored?.android ?? stored?.windows ?? stored?.linux;
   if (fallback) return NextResponse.json({ downloadUrl: fallback, version: (app as unknown as { latestVersion: string }).latestVersion ?? "1.0.0" });
 

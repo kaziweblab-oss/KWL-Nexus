@@ -111,6 +111,7 @@ export default async function AppDetailPage({ params }: { params: { id: string }
           platforms,
           features: masterFeatures,
           versions,
+          downloadUrls: dbApp.downloadUrl,
         }}
         plans={plans}
         reviewCount={reviewCount}
