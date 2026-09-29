@@ -9,6 +9,41 @@ import { useLanguage } from "@/components/shared/LanguageProvider";
 type Repo = { id: number; name: string; fullName: string; description: string | null; url: string; defaultBranch: string; private: boolean };
 type Detail = Repo & { owner: string; config: unknown };
 
+// Tries logo candidates in order; falls back to letter avatar when none load.
+function DetectedLogo({ candidates, name, logoIdx, logoOff, onAdvance, onEmpty }: { candidates: string[]; name: string; logoIdx: number; logoOff: boolean; onAdvance: () => void; onEmpty: () => void }) {
+  const src = !logoOff && logoIdx < candidates.length ? candidates[logoIdx] : null;
+  if (!src) {
+    return (
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary text-lg font-bold text-white dark:bg-secondary dark:text-ink">
+        {name.slice(0, 1).toUpperCase()}
+      </span>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={`${name} logo`}
+      className="h-11 w-11 shrink-0 rounded-2xl border border-ink/10 object-cover dark:border-white/10"
+      onError={() => {
+        if (logoIdx + 1 < candidates.length) onAdvance();
+        else onEmpty();
+      }}
+    />
+  );
+}
+
+// Logo candidates probed client-side (no extra API calls): first loadable image wins.
+function logoCandidates(owner: string, fullName: string, branch: string, configIcon?: string) {
+  const out: string[] = [];
+  if (configIcon) out.push(configIcon);
+  const base = `https://raw.githubusercontent.com/${fullName}/${branch}`;
+  for (const p of ["icon.png", "logo.png", "assets/icon.png", "assets/logo.png", "src-tauri/icons/128x128.png", "src-tauri/icons/icon.png", "public/icon.png", "public/logo.png"]) {
+    out.push(`${base}/${p}`);
+  }
+  return out;
+}
+
 export function GithubRepoBrowser() {
   const { t } = useLanguage();
   const [repos, setRepos] = useState<Repo[]>([]);
@@ -24,6 +59,8 @@ export function GithubRepoBrowser() {
   const [savingDefault, setSavingDefault] = useState(false);
   const [savedAppId, setSavedAppId] = useState("");
   const [savedAppName, setSavedAppName] = useState("");
+  const [logoIdx, setLogoIdx] = useState(0);
+  const [logoOff, setLogoOff] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,6 +125,8 @@ export function GithubRepoBrowser() {
       const data = text ? JSON.parse(text) : {};
       if (!res.ok) throw new Error(data.error ?? `Failed to load repo (${res.status})`);
       setSelected(data);
+      setLogoIdx(0);
+      setLogoOff(false);
       setError("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to load repository");
@@ -117,10 +156,12 @@ export function GithubRepoBrowser() {
       setError("");
       setSaved("");
       setSavedAppId("");
+      const logos = logoCandidates(selected.owner, selected.fullName, selected.defaultBranch, (selected.config as { iconUrl?: string } | null)?.iconUrl);
+      const detectedIcon = !logoOff && logos[logoIdx] ? logos[logoIdx] : undefined;
       const res = await fetch("/api/github/apps", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(selected),
+        body: JSON.stringify({ ...selected, config: { ...((selected.config as Record<string, unknown> | null) ?? {}), ...(detectedIcon ? { iconUrl: detectedIcon } : {}) } }),
       });
       const text = await res.text();
       const data = text ? JSON.parse(text) : {};
@@ -283,9 +324,15 @@ export function GithubRepoBrowser() {
           <>
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary text-white dark:bg-secondary dark:text-ink">
-                  <GitBranch size={20} />
-                </span>
+                <DetectedLogo
+                  key={selected.fullName}
+                  candidates={logoCandidates(selected.owner, selected.fullName, selected.defaultBranch, (selected.config as { iconUrl?: string } | null)?.iconUrl)}
+                  name={selected.name}
+                  logoIdx={logoIdx}
+                  logoOff={logoOff}
+                  onAdvance={() => setLogoIdx((i) => i + 1)}
+                  onEmpty={() => setLogoOff(true)}
+                />
                 <div>
                   <h2 className="text-base font-bold leading-tight text-ink dark:text-white">{selected.name}</h2>
                   <p className="flex items-center gap-1.5 text-xs text-ink/45 dark:text-white/40">{selected.private ? <Lock size={11} /> : <Globe size={11} />} {selected.fullName}</p>
