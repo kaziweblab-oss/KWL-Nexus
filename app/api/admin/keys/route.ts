@@ -19,8 +19,10 @@ export async function POST(request: Request) {
   const user = await requireAdmin();
   if (!user) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
   const body = await request.json().catch(() => ({})) as { name?: string };
+  const name = body.name?.trim();
+  if (!name) return NextResponse.json({ error: "Key name is required" }, { status: 400 });
   const plainKey = createApiKey();
-  const record = await ApiKey.create({ userId: user._id, name: body.name?.trim() || "Production key", keyHash: hashApiKey(plainKey), rateLimitPerHour: 1000 });
+  const record = await ApiKey.create({ userId: user._id, name, keyHash: hashApiKey(plainKey), rateLimitPerHour: 1000 });
   return NextResponse.json({ data: { id: record.id, name: record.name, key: plainKey, rateLimitPerHour: record.rateLimitPerHour } }, { status: 201 });
 }
 
