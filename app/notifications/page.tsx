@@ -97,7 +97,7 @@ export default function NotificationsPage() {
                       <Link href="/my-orders" className="rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-white hover:bg-primary/90">View Order</Link>
                     )
                   )}
-                  {n.type === "integration" && n.integrationId && <Link href={`/admin/settings/integrations/${n.integrationId}`} className="rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-white hover:bg-primary/90">Setup</Link>}
+                  {isAdmin && n.type === "integration" && n.integrationId && <Link href={`/admin/settings/integrations/${n.integrationId}`} className="rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-white hover:bg-primary/90">Setup</Link>}
                   {n.type === "subscription" && n.appId && <Link href={`/payment?appId=${n.appId}`} className="rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-emerald-700">Renew</Link>}
                   {!n.read ? <button onClick={() => markRead(n._id)} className="rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-white hover:bg-primary/90">Mark read</button> : <span className="text-xs text-ink/30 dark:text-white/30">Read</span>}
                 </div>
