@@ -46,7 +46,7 @@ export function AppReleaseManager({ owner, repo, appSlug, currentVersion, onAppl
 
   useEffect(() => { void load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [owner, repo]);
 
-  async function useRelease(rel: Release) {
+  async function applyRelease(rel: Release) {
     setApplying(rel.id);
     setMsg("");
     setError("");
@@ -105,7 +105,7 @@ export function AppReleaseManager({ owner, repo, appSlug, currentVersion, onAppl
                 </div>
               </div>
               {!isCurrent && (
-                <button disabled={applying === rel.id} onClick={() => void useRelease(rel)} className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary/90 disabled:opacity-50">
+                <button disabled={applying === rel.id} onClick={() => void applyRelease(rel)} className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary/90 disabled:opacity-50">
                   {applying === rel.id ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Use this release
                 </button>
               )}
