@@ -29,6 +29,11 @@ const AppSchema = new Schema(
       title: String,
       description: String,
       isActive: { type: Boolean, default: false },
+      sections: {
+        type: [{ heading: String, bodyMarkdown: String }],
+        default: undefined,
+      },
+      contentUpdatedAt: Date,
     },
     isNewRelease: { type: Boolean, default: false, index: true },
     newReleaseImageUrl: String,

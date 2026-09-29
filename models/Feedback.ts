@@ -8,6 +8,8 @@ const FeedbackSchema = new Schema(
     title: { type: String, required: true, trim: true, maxlength: 160 },
     description: { type: String, required: true, trim: true, maxlength: 5000 },
     screenshot: { type: String, maxlength: 1500000 },
+    link: { type: String, maxlength: 2000, trim: true },
+    contactEmail: { type: String, maxlength: 320, trim: true, lowercase: true },
     rating: { type: Number, min: 1, max: 5 },
     status: { type: String, enum: ["pending", "resolved", "ignored", "replied"], default: "pending", index: true },
     adminReply: { type: String, trim: true, maxlength: 5000 },

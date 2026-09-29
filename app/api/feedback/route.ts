@@ -4,7 +4,7 @@ import { authenticateApiRequest } from "@/lib/api/auth";
 import { connectToDatabase } from "@/lib/db/connect";
 import Feedback from "@/models/Feedback";
 
-const feedbackSchema = z.object({ appId: z.string().min(1), type: z.enum(["bug_report", "suggestion", "feature_request", "rating"]), title: z.string().min(3).max(160), description: z.string().min(5).max(5000), screenshot: z.string().max(1500000).optional(), rating: z.number().min(1).max(5).optional() });
+const feedbackSchema = z.object({ appId: z.string().min(1), type: z.enum(["bug_report", "suggestion", "feature_request", "rating"]), title: z.string().min(3).max(160), description: z.string().min(5).max(5000), screenshot: z.string().max(1500000).optional(), link: z.string().max(2000).optional(), contactEmail: z.string().max(320).optional(), rating: z.number().min(1).max(5).optional() });
 
 // Authenticated customers can submit one structured feedback item at a time.
 export async function POST(request: Request) {
@@ -22,6 +22,14 @@ export async function POST(request: Request) {
     if (!parsed.success) return NextResponse.json({ error: "Invalid feedback", details: parsed.error.flatten() }, { status: 400 });
     await connectToDatabase();
     const feedback = await Feedback.create({ ...parsed.data, userId: auth.userId, status: "pending" });
+    // Dashboard triage: fire-and-forget so notification DB writes never delay the 201 response.
+    // Skipped in tests to avoid open mongoose handles (connect is mocked there).
+    if (!process.env.JEST_WORKER_ID && process.env.NODE_ENV !== "test") {
+      try {
+        const { notifyAdmins } = await import("@/lib/notifications/admin");
+        void notifyAdmins("New feedback", `${parsed.data.type}: ${parsed.data.title}`, "general").catch(() => {});
+      } catch {}
+    }
     return NextResponse.json({ data: { id: feedback.id, status: feedback.status } }, { status: 201 });
   } catch (error) {
     console.error("Feedback POST failed:", error);
