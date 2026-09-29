@@ -8,7 +8,8 @@ type Release = { id: number; tag: string; name: string; body: string | null; dra
 
 function pickUrls(assets: Asset[]) {
   const find = (ext: string) => assets.find((a) => a.name.toLowerCase().endsWith(ext))?.url ?? "";
-  return { android: find(".apk"), windows: find(".exe"), linux: find(".deb") };
+  // Windows prefers NSIS .exe, falls back to .msi; Linux prefers .deb, falls back to .AppImage.
+  return { android: find(".apk"), windows: find(".exe") || find(".msi"), linux: find(".deb") || find(".appimage") };
 }
 
 function fmtSize(bytes: number) {
