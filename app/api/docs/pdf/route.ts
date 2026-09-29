@@ -1,7 +1,7 @@
 import { apiEndpoints } from "@/lib/api/docs";
 
-// Dependency-free multi-page PDF: KWL-NEXUS App Integration Guide for new app developers.
-// Tiny in-file PDF writer with a correct xref table; no external packages.
+// Dependency-free modern PDF: KWL-NEXUS App Integration Guide.
+// Brand styling (indigo accents, cover page, code cards) with a correct xref table.
 
 function esc(text: string) {
   const ascii = text
@@ -14,7 +14,16 @@ function esc(text: string) {
   return ascii.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
 }
 
-type Item = { text: string; size: number; bold: boolean; h: number };
+const INK: [number, number, number] = [0.09, 0.09, 0.18];
+const GRAY: [number, number, number] = [0.38, 0.38, 0.45];
+const PRIMARY: [number, number, number] = [0.42, 0.39, 1.0];
+const CARD_BG: [number, number, number] = [0.95, 0.95, 0.98];
+
+type Item = { text: string; size: number; bold: boolean; h: number; color: [number, number, number]; bg: boolean };
+
+const body = (text: string, h = 19): Item => ({ text, size: 11, bold: false, h, color: INK, bg: false });
+const code = (text: string): Item => ({ text, size: 9.5, bold: false, h: 17, color: INK, bg: true });
+const title = (text: string): Item => ({ text, size: 15, bold: true, h: 44, color: PRIMARY, bg: false });
 
 function buildPdf(): string {
   const W = 612;
@@ -23,52 +32,55 @@ function buildPdf(): string {
   const B = 64;
 
   const flow: Item[] = [
-    { text: "KWL-NEXUS", size: 13, bold: true, h: 22 },
-    { text: "App Integration Guide (for new app developers)", size: 20, bold: true, h: 30 },
-    { text: "Connect reports, tutorials, catalog and plans. Version 1.0.", size: 11, bold: false, h: 26 },
-    { text: "1. Connect your app in 4 steps", size: 14, bold: true, h: 26 },
-    { text: "Step 1 - Ask the Nexus admin for two things: (a) an API key", size: 11, bold: false, h: 15 },
-    { text: "(starts with kn_live_) and (b) your appId (Mongo ObjectId).", size: 11, bold: false, h: 21 },
-    { text: "Step 2 - Send the key on every request in the x-api-key header.", size: 11, bold: false, h: 21 },
-    { text: "Step 3 - Implement Reports (section 3) so users can send feedback.", size: 11, bold: false, h: 21 },
-    { text: "Step 4 - Implement Help/Tutorial (section 4) using cached content.", size: 11, bold: false, h: 21 },
-    { text: "Base URL is your Nexus domain, e.g. https://kwl-nexus.onrender.com", size: 11, bold: false, h: 15 },
-    { text: "Keep the API key secret: ship it as a build secret, never in chat.", size: 11, bold: false, h: 11 },
-    { text: "2. Authentication and limits", size: 14, bold: true, h: 26 },
-    { text: "Header: x-api-key: kn_live_...  (Authorization: Bearer also works)", size: 11, bold: false, h: 21 },
-    { text: "Rate limit: 1000 requests per hour per key (shared by all installs).", size: 11, bold: false, h: 21 },
-    { text: "401 = missing/invalid/revoked key. 429 = slow down and retry later.", size: 11, bold: false, h: 21 },
-    { text: "404 on /apps/<id>/... usually means a wrong appId or unpublished app.", size: 11, bold: false, h: 11 },
-    { text: "3. Reports API - POST /api/feedback", size: 14, bold: true, h: 26 },
-    { text: "Send user reports (errors, suggestions, feature requests, ratings).", size: 11, bold: false, h: 21 },
-    { text: "Required: appId, type, title (3-160 chars), description (5-5000).", size: 11, bold: false, h: 15 },
-    { text: "type is one of: bug_report | suggestion | feature_request | rating", size: 11, bold: false, h: 15 },
-    { text: "Optional: link (problem URL, max 2000), contactEmail, rating 1-5,", size: 11, bold: false, h: 15 },
-    { text: "screenshot (base64/text, max about 1.5MB).", size: 11, bold: false, h: 21 },
-    { text: 'Example: {"appId":"<ObjectId>","type":"bug_report",', size: 10, bold: false, h: 14 },
-    { text: '"title":"Crash on export","description":"Steps: ...",', size: 10, bold: false, h: 14 },
-    { text: '"link":"https://...","contactEmail":"user@mail.com"}', size: 10, bold: false, h: 21 },
-    { text: "201 returns { data: { id, status } }. Anything else: queue locally", size: 11, bold: false, h: 15 },
-    { text: "and retry later - never lose a user report.", size: 11, bold: false, h: 11 },
-    { text: "4. Tutorial API - GET /api/apps/<id>/tutorial", size: 14, bold: true, h: 26 },
-    { text: "Public endpoint (no key needed). Powers the in-app Help view.", size: 11, bold: false, h: 21 },
-    { text: "Response data: title, description, videoUrl/videoType (optional),", size: 11, bold: false, h: 15 },
-    { text: "sections: [{ heading, bodyMarkdown }] (optional), appName, appSlug.", size: 11, bold: false, h: 21 },
-    { text: "Cache the response on device and show the cached copy offline.", size: 11, bold: false, h: 15 },
-    { text: "Refresh in background when online. 404 = no tutorial published yet.", size: 11, bold: false, h: 11 },
-    { text: "5. Endpoint reference", size: 14, bold: true, h: 26 },
-    ...apiEndpoints.map((e): Item => ({ text: `${e.method}  ${e.path}  -  ${e.description}`, size: 9.5, bold: false, h: 14.5 })),
-    { text: "6. Support", size: 14, bold: true, h: 26 },
-    { text: "Lost key? The admin revokes it and generates a new one in seconds:", size: 11, bold: false, h: 15 },
-    { text: "Admin panel > Settings > Project integrations > API keys.", size: 11, bold: false, h: 21 },
-    { text: "Full interactive docs: <domain>/docs (admin) + test console.", size: 11, bold: false, h: 15 },
-    { text: "Machine-readable spec: /api/docs/openapi and /api/docs/postman.", size: 11, bold: false, h: 11 },
+    { text: "KWL-NEXUS", size: 13, bold: true, h: 24, color: PRIMARY, bg: false },
+    { text: "App Integration Guide", size: 30, bold: true, h: 40, color: INK, bg: false },
+    { text: "For new app developers", size: 15, bold: false, h: 24, color: GRAY, bg: false },
+    { text: "Connect reports, tutorials, catalog and plans. Version 1.0.", size: 11, bold: false, h: 30, color: GRAY, bg: false },
+    title("1. Connect your app in 4 steps"),
+    body("Step 1 - Ask the Nexus admin for two things: (a) an API key"),
+    body("(starts with kn_live_) and (b) your appId (Mongo ObjectId).", 24),
+    body("Step 2 - Send the key on every request in the x-api-key header.", 24),
+    body("Step 3 - Implement Reports (section 3) so users can send feedback.", 24),
+    body("Step 4 - Implement Help/Tutorial (section 4) using cached content.", 24),
+    body("Base URL is your Nexus domain, e.g. https://kwl-nexus.onrender.com"),
+    body("Keep the API key secret: ship it as a build secret, never in chat."),
+    title("2. Authentication and limits"),
+    body("Header: x-api-key: kn_live_...  (Authorization: Bearer also works)", 24),
+    body("Rate limit: 1000 requests per hour per key (shared by all installs).", 24),
+    body("401 = missing/invalid/revoked key. 429 = slow down and retry later.", 24),
+    body("404 on /apps/<id>/... usually means a wrong appId or unpublished app."),
+    title("3. Reports API - POST /api/feedback"),
+    body("Send user reports (errors, suggestions, feature requests, ratings).", 24),
+    body("Required: appId, type, title (3-160 chars), description (5-5000)."),
+    body("type is one of: bug_report | suggestion | feature_request | rating"),
+    body("Optional: link (problem URL, max 2000), contactEmail, rating 1-5,"),
+    body("screenshot (base64/text, max about 1.5MB).", 24),
+    code('Example: {"appId":"<ObjectId>","type":"bug_report",'),
+    code('"title":"Crash on export","description":"Steps: ...",'),
+    code('"link":"https://...","contactEmail":"user@mail.com"}'),
+    body("201 returns { data: { id, status } }. Anything else: queue locally", 24),
+    body("and retry later - never lose a user report."),
+    title("4. Tutorial API - GET /api/apps/<id>/tutorial"),
+    body("Public endpoint (no key needed). Powers the in-app Help view.", 24),
+    body("Response data: title, description, videoUrl/videoType (optional),"),
+    body("sections: [{ heading, bodyMarkdown }] (optional), appName, appSlug.", 24),
+    body("Cache the response on device and show the cached copy offline."),
+    body("Refresh in background when online. 404 = no tutorial published yet."),
+    title("5. Endpoint reference"),
+    ...apiEndpoints.map(
+      (e): Item => ({ text: `${e.method}  ${e.path}  -  ${e.description}`, size: 9.5, bold: false, h: 17, color: INK, bg: false }),
+    ),
+    title("6. Support"),
+    body("Lost key? The admin revokes it and generates a new one in seconds:"),
+    body("Admin panel > Settings > Project integrations > API keys.", 24),
+    body("Full interactive docs: <domain>/docs (admin) + test console."),
+    body("Machine-readable spec: /api/docs/openapi and /api/docs/postman."),
   ];
 
-  // Paginate.
+  // Paginate with generous leading so nothing ever overlaps.
   const pages: Item[][] = [];
   let cur: Item[] = [];
-  let y = H - 96;
+  let y = H - 110;
   for (const item of flow) {
     if (y - item.h < B) {
       pages.push(cur);
@@ -80,39 +92,48 @@ function buildPdf(): string {
   }
   pages.push(cur);
 
-  // Object numbers: 1 Catalog, 2 Pages, 3 Helvetica, 4 Helvetica-Bold,
-  // then per page: 5,7,9... page dicts and 6,8,10... content streams.
-  const kidRefs: string[] = pages.map((_, pi) => `${5 + pi * 2} 0 R`);
+  const col = (c: [number, number, number]) => `${c[0].toFixed(3)} ${c[1].toFixed(3)} ${c[2].toFixed(3)}`;
 
-  // Simpler: construct final object list directly.
+  // Object numbers: 1 Catalog, 2 Pages, 3 Helvetica, 4 Helvetica-Bold,
+  // then per page: 5,7,9... dicts and 6,8,10... streams.
+  const kidRefs = pages.map((_, pi) => `${5 + pi * 2} 0 R`);
   const finalObjs: string[] = [
     "<< /Type /Catalog /Pages 2 0 R >>",
     `<< /Type /Pages /Count ${pages.length} /Kids [${kidRefs.join(" ")}] >>`,
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
   ];
-  for (let pi = 0; pi < pages.length; pi++) {
-    const pNo = 5 + pi * 2;
-    const cNo = pNo + 1;
+
+  pages.forEach((lines, pi) => {
+    const cNo = 5 + pi * 2 + 1;
     finalObjs.push(
       `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${cNo} 0 R >>`,
     );
-    let yy = pi === 0 ? H - 96 : H - 72;
-    let ops = "BT";
-    for (const item of pages[pi]) {
+    // Top accent bar + footer rule on every page.
+    let ops = `${col(PRIMARY)} rg 0 ${H - 10} ${W} 10 re f ${col(PRIMARY)} rg ${M} 46 ${W - M * 2} 1.5 re f`;
+    ops += ` 0.55 0.55 0.65 rg /F1 9 Tf 1 0 0 1 ${M} 30 Tm (KWL-NEXUS Integration Guide  -  Page ${pi + 1} of ${pages.length}) Tj`;
+    ops += " BT";
+    let yy = pi === 0 ? H - 110 : H - 72;
+    for (const item of lines) {
+      const top = yy;
+      if (item.bg) {
+        ops += ` ${col(CARD_BG)} rg ${M - 8} ${(top - item.h + 4).toFixed(1)} ${W - M * 2 + 16} ${(item.h - 2).toFixed(1)} re f`;
+      }
       const font = item.bold ? "/F2" : "/F1";
-      ops += ` ${font} ${item.size} Tf 1 0 0 1 ${M} ${yy.toFixed(1)} Tm (${esc(item.text)}) Tj`;
+      // Baseline sits ~72% down the line box: no ascender/descender collisions.
+      const baseline = top - item.h + Math.max(4, item.h - item.size - 3);
+      ops += ` ${col(item.color)} rg ${font} ${item.size} Tf 1 0 0 1 ${M} ${baseline.toFixed(1)} Tm (${esc(item.text)}) Tj`;
       yy -= item.h;
     }
-    ops += ` /F1 9 Tf 1 0 0 1 ${M} 36 Tm (Page ${pi + 1} of ${pages.length}) Tj ET`;
+    ops += " ET";
     finalObjs.push(`<< /Length ${Buffer.byteLength(ops, "utf8")} >>\nstream\n${ops}\nendstream`);
-  }
+  });
 
   let out = "%PDF-1.4\n";
   const offsets: number[] = [];
-  finalObjs.forEach((body, i) => {
+  finalObjs.forEach((objBody, i) => {
     offsets.push(Buffer.byteLength(out, "utf8"));
-    out += `${i + 1} 0 obj\n${body}\nendobj\n`;
+    out += `${i + 1} 0 obj\n${objBody}\nendobj\n`;
   });
   const xrefAt = Buffer.byteLength(out, "utf8");
   out += `xref\n0 ${finalObjs.length + 1}\n0000000000 65535 f \n`;
