@@ -22,6 +22,8 @@ export function GithubRepoBrowser() {
   const [manualRepo, setManualRepo] = useState("");
   const [showManual, setShowManual] = useState(false);
   const [savingDefault, setSavingDefault] = useState(false);
+  const [savedAppId, setSavedAppId] = useState("");
+  const [savedAppName, setSavedAppName] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -114,6 +116,7 @@ export function GithubRepoBrowser() {
     try {
       setError("");
       setSaved("");
+      setSavedAppId("");
       const res = await fetch("/api/github/apps", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -123,6 +126,7 @@ export function GithubRepoBrowser() {
       const data = text ? JSON.parse(text) : {};
       if (!res.ok) throw new Error(data.error ?? "Unable to save app");
       setSaved(`${data.name} ${t("savedAsDraft")}.`);
+      if (data.id) { setSavedAppId(data.id); setSavedAppName(data.name ?? selected.name); }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to save app");
     }
@@ -148,6 +152,7 @@ export function GithubRepoBrowser() {
       const data = text ? JSON.parse(text) : {};
       if (!res.ok) throw new Error(data.error ?? "Unable to save app");
       setSaved(`${data.name} ${t("savedAsDraft")} (owner: ${manualOwner.trim()}).`);
+      if (data.id) { setSavedAppId(data.id); setSavedAppName(data.name ?? manualRepo.trim()); }
       setManualRepo("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to save app");
@@ -305,6 +310,11 @@ export function GithubRepoBrowser() {
               <Star size={16} /> {t("addAppFromRepo")}
             </button>
             {saved && <p className="mt-3 rounded-xl bg-emerald-50 px-4 py-3 text-center text-sm font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">{saved}</p>}
+            {savedAppId && (
+              <Link href={`/admin/apps/${savedAppId}/edit`} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-5 py-3.5 text-sm font-bold text-white transition hover:bg-primary dark:bg-white dark:text-ink dark:hover:bg-secondary">
+                Open {savedAppName || "app"} in editor <ExternalLink size={15} />
+              </Link>
+            )}
             {error && <p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-center text-sm font-semibold text-red-600 dark:bg-red-500/10 dark:text-red-300">{error}</p>}
           </>
         ) : (
