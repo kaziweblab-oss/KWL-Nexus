@@ -32,7 +32,7 @@ test("homepage exposes the store promise and browse CTA", () => {
 
 test("app detail page renders a published db app", async () => {
   (App.findOne as jest.Mock).mockReturnValue({ lean: () => Promise.resolve({ _id: "app1", name: "KWL Video Downloader", slug: "kwl-video-downloader", description: "Downloader", category: "Multimedia", downloadCount: 7, latestVersion: "1.0.7", features: [], screenshots: [], downloadUrl: {} }) });
-  (Plan.find as jest.Mock).mockResolvedValue([]);
+  (Plan.find as jest.Mock).mockResolvedValue([{ name: "Pro", price: 5, interval: "month", isActive: true, features: [] }]);
   (AppVersion.find as jest.Mock).mockReturnValue({ sort: () => Promise.resolve([]) });
   (Feedback.aggregate as jest.Mock).mockResolvedValue([]);
   const ui = await AppDetailPage({ params: { id: "kwl-video-downloader" } });
