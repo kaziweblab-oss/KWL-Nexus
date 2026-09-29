@@ -40,7 +40,7 @@ export function decryptToken(enc: string): string {
   }
 }
 
-// Resolve effective GitHub token: SystemConfig (DB, encrypted) > GITHUB_TOKEN env > OAuth token
+// Resolve effective GitHub token: SystemConfig (DB, encrypted) > Integration PAT > GITHUB_TOKEN env > OAuth token
 export async function getEffectiveGithubToken(oauthToken?: string | null): Promise<string | null> {
   // 1) DB stored PAT (encrypted)
   try {
@@ -53,6 +53,11 @@ export async function getEffectiveGithubToken(oauthToken?: string | null): Promi
       if (dec && dec.startsWith("ghp_")) return dec;
       if (dec) return dec;
     }
+  } catch {}
+  // 1b) Project integration PAT (same token the repo list uses — keeps list + detail in sync)
+  try {
+    const integrationToken = await getConfiguredGithubIntegrationToken();
+    if (integrationToken) return integrationToken;
   } catch {}
   // 2) Env fallback
   const envToken = process.env.GITHUB_TOKEN?.trim();

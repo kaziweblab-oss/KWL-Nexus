@@ -56,6 +56,7 @@ export function GithubRepoBrowser() {
         if (!cancelled) {
           const list: Repo[] = Array.isArray(data) ? data : data?.data ?? [];
           setRepos(list);
+          setError("");
           if (list.length > 0) setShowManual(false);
           else setShowManual(true);
         }
@@ -73,6 +74,18 @@ export function GithubRepoBrowser() {
   }, []);
 
   const visible = repos.filter((r) => `${r.name} ${r.description ?? ""}`.toLowerCase().includes(query.toLowerCase()));
+
+  // Repo picker: when the repo list loaded, pick from dropdown (auto-fills login owner) instead of typing.
+  function pickRepoFromList(name: string) {
+    const found = repos.find((r) => r.name === name);
+    if (found) {
+      const [login] = found.fullName.split("/");
+      if (login) setManualOwner(login);
+      setManualRepo(found.name);
+    } else {
+      setManualRepo(name);
+    }
+  }
 
   async function selectRepo(repo: Repo) {
     try {
@@ -211,7 +224,7 @@ export function GithubRepoBrowser() {
           <p className="mt-1 text-xs leading-5 text-amber-700/80 dark:text-amber-200/70">Auto-detect {error ? t("autoDetectFailedWithError", { error }) : t("autoDetectFailed")}. Enter owner/repo below — it will be saved as <span className="font-mono font-bold">{t("defaultOwner")}</span> {t("autoUsed")}</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
             <label className="text-xs font-semibold text-ink/60 dark:text-white/60">{t("ownerLabel")}<input value={manualOwner} onChange={(e) => setManualOwner(e.target.value)} placeholder={defaultOwner ?? "kaziweblab"} className="mt-1 h-10 w-full rounded-xl border border-ink/10 bg-white px-3 text-sm dark:border-white/10 dark:bg-[#1a1a2e] dark:text-white" /></label>
-            <label className="text-xs font-semibold text-ink/60 dark:text-white/60">{t("repoLabel")}<input value={manualRepo} onChange={(e) => setManualRepo(e.target.value)} placeholder="focus-flow" className="mt-1 h-10 w-full rounded-xl border border-ink/10 bg-white px-3 text-sm dark:border-white/10 dark:bg-[#1a1a2e] dark:text-white" /></label>
+            <label className="text-xs font-semibold text-ink/60 dark:text-white/60">{t("repoLabel")}{repos.length > 0 ? <select value={manualRepo} onChange={(e) => pickRepoFromList(e.target.value)} className="mt-1 h-10 w-full rounded-xl border border-ink/10 bg-white px-3 text-sm dark:border-white/10 dark:bg-[#1a1a2e] dark:text-white"><option value="">Select a repository…</option>{repos.map((r) => <option key={r.id} value={r.name}>{r.fullName}{r.private ? " (private)" : ""}</option>)}</select> : <input value={manualRepo} onChange={(e) => setManualRepo(e.target.value)} placeholder="focus-flow" className="mt-1 h-10 w-full rounded-xl border border-ink/10 bg-white px-3 text-sm dark:border-white/10 dark:bg-[#1a1a2e] dark:text-white" />}</label>
             <div className="flex items-end gap-2">
               <button onClick={saveDefaultOwner} disabled={savingDefault || !manualOwner.trim()} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-white px-4 text-xs font-semibold text-ink border border-ink/10 hover:bg-paper disabled:opacity-50 dark:bg-white/5 dark:text-white dark:border-white/10"><Save size={14}/> {t("saveDefault")}</button>
               <button onClick={addManualRepo} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-primary px-5 text-xs font-bold text-white hover:bg-primary/90 dark:bg-secondary dark:text-ink"><Star size={14}/>{t("add")}</button>

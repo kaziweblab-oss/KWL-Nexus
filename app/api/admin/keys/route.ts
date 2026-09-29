@@ -34,8 +34,14 @@ export async function GET() {
 export async function DELETE(request: Request) {
   const user = await requireAdmin();
   if (!user) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-  const id = new URL(request.url).searchParams.get("id");
+  const url = new URL(request.url);
+  const id = url.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Key id is required" }, { status: 400 });
+  // hard=true permanently removes the row; default only revokes (soft, keeps audit trail).
+  if (url.searchParams.get("hard") === "true" || url.searchParams.get("mode") === "hard") {
+    await ApiKey.deleteOne({ _id: id, userId: user._id });
+    return NextResponse.json({ data: { deleted: true } });
+  }
   await ApiKey.updateOne({ _id: id, userId: user._id }, { isRevoked: true });
   return NextResponse.json({ data: { revoked: true } });
 }
