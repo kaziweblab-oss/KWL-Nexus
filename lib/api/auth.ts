@@ -16,6 +16,30 @@ export function createApiKey() {
   return `kn_live_${crypto.randomBytes(24).toString("hex")}`;
 }
 
+// Reversible secret storage for admin reveal-on-demand (AES-256-GCM, key from NEXTAUTH_SECRET).
+// Hash stays the source of truth for auth; this only powers the dashboard "Show key" button.
+function getSecretKey() {
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (!secret) throw new Error("NEXTAUTH_SECRET is required for API key encryption");
+  return crypto.createHash("sha256").update(secret).digest();
+}
+
+export function encryptApiKeySecret(value: string) {
+  const key = getSecretKey();
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  const enc = Buffer.concat([cipher.update(value, "utf8"), cipher.final()]);
+  return `${iv.toString("hex")}:${cipher.getAuthTag().toString("hex")}:${enc.toString("hex")}`;
+}
+
+export function decryptApiKeySecret(payload: string) {
+  const [ivHex, tagHex, dataHex] = payload.split(":");
+  if (!ivHex || !tagHex || !dataHex) throw new Error("Invalid encrypted payload");
+  const decipher = crypto.createDecipheriv("aes-256-gcm", getSecretKey(), Buffer.from(ivHex, "hex"));
+  decipher.setAuthTag(Buffer.from(tagHex, "hex"));
+  return Buffer.concat([decipher.update(Buffer.from(dataHex, "hex")), decipher.final()]).toString("utf8");
+}
+
 export async function authenticateApiRequest(request: Request) {
   const raw = request.headers.get("x-api-key") ?? request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (raw) {

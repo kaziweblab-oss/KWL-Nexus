@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth/auth";
 import { isAdminEmail } from "@/lib/auth/admin";
 import { connectToDatabase } from "@/lib/db/connect";
 import ApiKey from "@/models/ApiKey";
-import { createApiKey, hashApiKey } from "@/lib/api/auth";
+import { createApiKey, hashApiKey, encryptApiKeySecret } from "@/lib/api/auth";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   const name = body.name?.trim();
   if (!name) return NextResponse.json({ error: "Key name is required" }, { status: 400 });
   const plainKey = createApiKey();
-  const record = await ApiKey.create({ userId: user._id, name, keyHash: hashApiKey(plainKey), rateLimitPerHour: 1000 });
+  const record = await ApiKey.create({ userId: user._id, name, keyHash: hashApiKey(plainKey), keyEnc: encryptApiKeySecret(plainKey), rateLimitPerHour: 1000 });
   return NextResponse.json({ data: { id: record.id, name: record.name, key: plainKey, rateLimitPerHour: record.rateLimitPerHour } }, { status: 201 });
 }
 
