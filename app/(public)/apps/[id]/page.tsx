@@ -35,6 +35,9 @@ export default async function AppDetailPage({ params }: { params: { id: string }
     previewVideoUrl?: string;
     screenshotVideos?: string[];
     downloadUrl?: { android?: string; windows?: string; linux?: string; apk?: string; exe?: string; deb?: string };
+    size?: string;
+    githubOwner?: string;
+    updatedAt?: Date;
   };
   const dbApp = (await App.findOne({ isPublished: true, $or: or }).lean().catch(() => null)) as unknown as DbApp | null;
   if (!dbApp) notFound();
@@ -112,6 +115,9 @@ export default async function AppDetailPage({ params }: { params: { id: string }
           features: masterFeatures,
           versions,
           downloadUrls: dbApp.downloadUrl,
+          updatedAt: dbApp.updatedAt ? new Date(dbApp.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "",
+          size: dbApp.size || "",
+          developer: dbApp.githubOwner || "KWL Nexus",
         }}
         plans={plans}
         reviewCount={reviewCount}

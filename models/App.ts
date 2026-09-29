@@ -37,6 +37,7 @@ const AppSchema = new Schema(
     },
     isNewRelease: { type: Boolean, default: false, index: true },
     newReleaseImageUrl: String,
+    size: { type: String, trim: true },
     newReleaseOrder: { type: Number, default: 0 },
     downloadCount: { type: Number, default: 0, index: true },
     screenshots: { type: [String], default: [] },

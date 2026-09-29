@@ -34,6 +34,7 @@ const updateSchema = z.object({
   isPublished: z.boolean().optional(),
   isNewRelease: z.boolean().optional(),
   features: z.array(z.string().min(1).max(160)).max(50).optional(),
+  size: z.string().max(20).optional().or(z.literal("")),
 });
 
 export async function GET(_request: Request, { params }: { params: { id: string } }) {
@@ -67,7 +68,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     }
     app.downloadUrl = next;
   }
-  for (const key of ["name", "description", "category", "pricing", "websiteUrl", "iconUrl", "isPublished", "isNewRelease"] as const) {
+  for (const key of ["name", "description", "category", "pricing", "websiteUrl", "iconUrl", "isPublished", "isNewRelease", "size"] as const) {
     const v = data[key];
     if (v !== undefined) (app as unknown as Record<string, unknown>)[key] = v;
   }

@@ -26,7 +26,7 @@ export function MarketplaceDetailClient({
   previewVideoUrl,
   reviewCount,
 }: {
-  app: { id: string; name: string; category: string; icon: string; accent: string; rating: string; downloads: string; description: string; longDescription: string; platforms: string[]; downloadUrls?: { android?: string; windows?: string; linux?: string }; features?: string[]; versions?: { version: string; date: string; notes: string }[] };
+  app: { id: string; name: string; category: string; icon: string; accent: string; rating: string; downloads: string; description: string; longDescription: string; platforms: string[]; downloadUrls?: { android?: string; windows?: string; linux?: string }; updatedAt?: string; size?: string; developer?: string; features?: string[]; versions?: { version: string; date: string; notes: string }[] };
   plans: Plan[];
   screenshots: string[];
   previewImageUrl?: string;
@@ -191,12 +191,12 @@ export function MarketplaceDetailClient({
             <p className="mt-2 flex items-center justify-center gap-1 text-[10px] text-ink/40 dark:text-white/30"><ShieldCheck size={10} /> {copy.secureDownload}</p>
             <div className="mt-4 space-y-2 border-t border-ink/10 pt-4 dark:border-white/5 text-xs">
               {[
-                [copy.version, app.versions?.[0]?.version ?? "v2.1.0"],
-                [copy.updated, "May 12, 2024"],
-                [copy.size, "85.4 MB"],
+                [copy.version, app.versions?.[0]?.version ? `v${app.versions[0].version}` : "—"],
+                [copy.updated, app.updatedAt || "—"],
+                [copy.size, app.size || "—"],
                 [copy.category, app.category],
-                [copy.developer, "KWL Nexus Team"],
-                [copy.compatibility, "Windows 10+, macOS 11+, Android 8+"],
+                [copy.developer, app.developer || "KWL Nexus"],
+                [copy.compatibility, app.platforms.length ? app.platforms.join(", ") : "—"],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between">
                   <span className="text-ink/40 dark:text-white/40">{k}</span>
