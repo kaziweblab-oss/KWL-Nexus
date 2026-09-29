@@ -1,5 +1,9 @@
 import { apiEndpoints } from "@/lib/api/docs";
 
+// Always render fresh (never serve a stale prerendered copy).
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // Dependency-free modern PDF: KWL-NEXUS App Integration Guide.
 // Brand styling (indigo accents, cover page, code cards) with a correct xref table.
 
