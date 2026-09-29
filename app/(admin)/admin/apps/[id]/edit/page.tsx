@@ -22,6 +22,7 @@ type AppDoc = {
   githubOwner?: string;
   githubRepo?: string;
   latestVersion?: string | null;
+  features?: string[];
   downloadUrl?: { android?: string; windows?: string; linux?: string };
   tutorial?: { videoUrl?: string; videoType?: "youtube" | "vimeo" | "custom"; title?: string; description?: string; isActive?: boolean };
 };
@@ -35,6 +36,7 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [form, setForm] = useState({ name: "", description: "", category: "", pricing: "free", websiteUrl: "", iconUrl: "" });
+  const [featuresText, setFeaturesText] = useState("");
 
   async function load() {
     try {
@@ -45,6 +47,7 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
       const d = j.data as AppDoc;
       setApp(d);
       setForm({ name: d.name ?? "", description: d.description ?? "", category: d.category ?? "", pricing: d.pricing ?? "free", websiteUrl: d.websiteUrl ?? "", iconUrl: d.iconUrl ?? "" });
+      setFeaturesText(Array.isArray(d.features) ? d.features.join("\n") : "");
       setError("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to load app");
@@ -72,6 +75,29 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
       void load();
     } catch (e) {
       setMsg(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveFeatures(e: React.FormEvent) {
+    e.preventDefault();
+    if (!app) return;
+    const features = featuresText.split("\n").map((f) => f.trim()).filter(Boolean);
+    setSaving(true);
+    setMsg("");
+    try {
+      const res = await fetch(`/api/admin/apps/${encodeURIComponent(app.slug || app._id)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ features }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(typeof j.error === "string" ? j.error : "Save failed");
+      showToast("Features saved. Use them in Pricing plans.", "success");
+      void load();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Save failed", "error");
     } finally {
       setSaving(false);
     }
@@ -158,6 +184,15 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
             <label className="block text-sm font-semibold text-ink/60 dark:text-white/60">Icon URL<input value={form.iconUrl} onChange={(e) => setForm({ ...form, iconUrl: e.target.value })} placeholder="https://…" className="mt-2 h-11 w-full rounded-xl border border-ink/10 bg-paper px-4 text-sm text-ink outline-none dark:border-white/10 dark:bg-white/5 dark:text-white" /></label>
           </div>
           <div><button disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"><Save size={15} /> {saving ? "Saving…" : "Save details"}</button>{msg && <span className="ml-3 text-sm text-[#159570]">{msg}</span>}</div>
+        </form>
+      </div>
+
+      <div className="mt-10">
+        <h2 className="mb-5 text-2xl font-bold text-ink dark:text-white">Features</h2>
+        <p className="mb-4 text-sm text-ink/60 dark:text-white/60">One feature per line. Shown on the store page and available as toggles in Pricing plans.</p>
+        <form onSubmit={(e) => void saveFeatures(e)} className="rounded-2xl border border-ink/10 bg-white p-6 dark:border-white/10 dark:bg-[#1a1a2e]">
+          <textarea value={featuresText} onChange={(e) => setFeaturesText(e.target.value)} rows={6} placeholder={"Fast 4K downloads\nNo ads or trackers\nBatch queue with resume"} className="min-h-[140px] w-full resize-y rounded-xl border border-ink/10 bg-paper p-4 text-sm leading-6 text-ink outline-none dark:border-white/10 dark:bg-white/5 dark:text-white" />
+          <button disabled={saving} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"><Save size={15} /> {saving ? "Saving…" : "Save features"}</button>
         </form>
       </div>
 

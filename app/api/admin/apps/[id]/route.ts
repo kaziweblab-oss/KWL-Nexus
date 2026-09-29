@@ -33,6 +33,7 @@ const updateSchema = z.object({
     .optional(),
   isPublished: z.boolean().optional(),
   isNewRelease: z.boolean().optional(),
+  features: z.array(z.string().min(1).max(160)).max(50).optional(),
 });
 
 export async function GET(_request: Request, { params }: { params: { id: string } }) {
@@ -69,6 +70,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   for (const key of ["name", "description", "category", "pricing", "websiteUrl", "iconUrl", "isPublished", "isNewRelease"] as const) {
     const v = data[key];
     if (v !== undefined) (app as unknown as Record<string, unknown>)[key] = v;
+  }
+  if (data.features !== undefined) {
+    app.features = data.features.map((f) => f.trim()).filter(Boolean);
   }
   if (data.latestVersion !== undefined && data.latestVersion !== app.latestVersion) {
     app.latestVersion = data.latestVersion;
