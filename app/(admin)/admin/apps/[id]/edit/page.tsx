@@ -237,8 +237,8 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
               (<code className="rounded bg-ink/5 px-1 font-mono text-xs dark:bg-white/10">{app.slug || app._id}</code>), then the app pings
               <code className="rounded bg-ink/5 px-1 font-mono text-xs dark:bg-white/10">POST /api/apps/{"<id>"}/ping</code> on startup. See the PDF guide for the full contract.
             </p>
-            <Link href="/docs" className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary/90">
-              Open API docs <ArrowRight size={12} />
+            <Link href={`/admin/apps/${app.slug || app._id}/connect`} className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary/90">
+              Open connect guide <ArrowRight size={12} />
             </Link>
           </div>
         )}
