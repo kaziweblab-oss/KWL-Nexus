@@ -27,7 +27,7 @@ export function MarketplaceDetailClient({
   previewVideoUrl,
   reviewCount,
 }: {
-  app: { id: string; name: string; category: string; icon: string; iconUrl?: string | null; accent: string; rating: string; downloads: string; description: string; longDescription: string; platforms: string[]; downloadUrls?: { android?: string; windows?: string; linux?: string }; updatedAt?: string; size?: string; developer?: string; features?: string[]; versions?: { version: string; tag?: string; urls?: { android?: string; windows?: string; linux?: string }; date: string; notes: string }[] };
+  app: { id: string; name: string; category: string; icon: string; iconUrl?: string | null; accent: string; rating: string; downloads: string; description: string; longDescription: string; platforms: string[]; latestVersion?: string | null; downloadUrls?: { android?: string; windows?: string; linux?: string }; updatedAt?: string; size?: string; developer?: string; features?: string[]; versions?: { version: string; tag?: string; urls?: { android?: string; windows?: string; linux?: string }; date: string; notes: string }[] };
   plans: Plan[];
   screenshots: string[];
   previewImageUrl?: string;
@@ -175,11 +175,15 @@ export function MarketplaceDetailClient({
               ) : (
                 <p className="rounded-xl border border-dashed border-ink/15 px-4 py-5 text-center text-xs text-ink/50 dark:border-white/10 dark:text-white/40">No builds published for any platform yet.</p>
               )}
-              {(app.versions ?? []).length > 1 && (
-                <div className="rounded-xl border border-ink/10 bg-paper/60 p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-ink/45 dark:text-white/40">Older versions</p>
-                  <div className="mt-2 space-y-2">
-                    {(app.versions ?? []).slice(1).map((v) => (
+              {(() => {
+                const latest = (app.latestVersion ?? app.versions?.[0]?.version ?? "").replace(/^v/i, "").toLowerCase();
+                const older = (app.versions ?? []).filter((v) => v.version.replace(/^v/i, "").toLowerCase() !== latest);
+                if (!older.length) return null;
+                return (
+                  <div className="rounded-xl border border-ink/10 bg-paper/60 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-ink/45 dark:text-white/40">Older versions</p>
+                    <div className="mt-2 space-y-2">
+                      {older.map((v) => (
                       <div key={v.version} className="flex items-center gap-2 rounded-lg bg-white px-2.5 py-2 dark:bg-white/5">
                         <button
                           onClick={() => void handleDownload(dlPlatform || app.platforms[0], v.tag || v.version)}
@@ -197,7 +201,8 @@ export function MarketplaceDetailClient({
                     ))}
                   </div>
                 </div>
-              )}
+                );
+              })()}
             </div>
           </div>
 

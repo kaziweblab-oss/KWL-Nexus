@@ -83,7 +83,7 @@ export default function FeedbackForm({ appId }: Props) {
       const res = await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, appId, link: form.link.trim() || undefined, ...(form.type === "rating" ? { rating } : {}) }),
+        body: JSON.stringify({ ...form, appId, link: form.type === "bug_report" ? form.link.trim() || undefined : undefined, ...(form.type === "rating" ? { rating } : {}) }),
       });
       const result = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(result.error ?? t("feedbackError"));
@@ -157,13 +157,15 @@ export default function FeedbackForm({ appId }: Props) {
           {t("feedbackEvidenceHint")}
         </p>
       )}
-      <input
-        value={form.link}
-        onChange={(e) => setForm({ ...form, link: e.target.value })}
-        placeholder={t("feedbackLinkPlaceholder")}
-        inputMode="url"
-        className="mt-3 h-11 w-full rounded-xl border border-ink/10 dark:border-white/10 bg-paper dark:bg-white/10 px-4 text-sm text-ink dark:text-white placeholder:text-ink/40 dark:placeholder:text-white/40 outline-none focus:border-primary"
-      />
+      {form.type === "bug_report" && (
+        <input
+          value={form.link}
+          onChange={(e) => setForm({ ...form, link: e.target.value })}
+          placeholder={t("feedbackLinkPlaceholder")}
+          inputMode="url"
+          className="mt-3 h-11 w-full rounded-xl border border-ink/10 dark:border-white/10 bg-paper dark:bg-white/10 px-4 text-sm text-ink dark:text-white placeholder:text-ink/40 dark:placeholder:text-white/40 outline-none focus:border-primary"
+        />
+      )}
 
       <div className="mt-3">
         <p className="text-sm text-ink/55 dark:text-white/60">{t("screenshot")}</p>
