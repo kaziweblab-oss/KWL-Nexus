@@ -39,6 +39,7 @@ export default async function AppDetailPage({ params }: { params: { id: string }
     size?: string;
     githubOwner?: string;
     updatedAt?: Date;
+    i18n?: { bn?: { name?: string; description?: string; category?: string; features?: string[] } };
   };
   const dbApp = (await App.findOne({ isPublished: true, $or: or }).lean().catch(() => null)) as unknown as DbApp | null;
   if (!dbApp) notFound();
@@ -123,6 +124,7 @@ export default async function AppDetailPage({ params }: { params: { id: string }
           updatedAt: dbApp.updatedAt ? new Date(dbApp.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "",
           size: dbApp.size || "",
           developer: dbApp.githubOwner || "KWL Nexus",
+          i18nBn: dbApp.i18n?.bn ?? null,
         }}
         plans={plans}
         reviewCount={reviewCount}

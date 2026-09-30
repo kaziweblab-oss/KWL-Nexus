@@ -97,5 +97,17 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     } catch {}
   }
   await app.save();
+  // Background BN auto-translation when EN content changed (fire-and-forget, English fallback on failure).
+  if (data.name !== undefined || data.description !== undefined || data.category !== undefined || data.features !== undefined) {
+    const appId = app._id.toString();
+    const snapshot = { name: app.name as string, description: app.description as string, category: app.category as string, features: (app.features ?? []) as string[] };
+    void (async () => {
+      try {
+        const { translateAppContent } = await import("@/lib/i18n/translate");
+        const bn = await translateAppContent(snapshot);
+        if (bn) await App.updateOne({ _id: appId }, { "i18n.bn": bn });
+      } catch {}
+    })();
+  }
   return NextResponse.json({ data: app });
 }

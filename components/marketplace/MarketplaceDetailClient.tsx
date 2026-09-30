@@ -49,7 +49,7 @@ export function MarketplaceDetailClient({
   previewVideoUrl,
   reviewCount,
 }: {
-  app: { id: string; name: string; category: string; icon: string; iconUrl?: string | null; accent: string; rating: string; downloads: string; description: string; longDescription: string; platforms: string[]; latestVersion?: string | null; downloadUrls?: { android?: string; windows?: string; linux?: string }; updatedAt?: string; size?: string; developer?: string; features?: string[]; versions?: { version: string; tag?: string; urls?: { android?: string; windows?: string; linux?: string }; date: string; notes: string }[] };
+  app: { id: string; name: string; category: string; icon: string; iconUrl?: string | null; accent: string; rating: string; downloads: string; description: string; longDescription: string; platforms: string[]; latestVersion?: string | null; i18nBn?: { name?: string; description?: string; category?: string; features?: string[] } | null; downloadUrls?: { android?: string; windows?: string; linux?: string }; updatedAt?: string; size?: string; developer?: string; features?: string[]; versions?: { version: string; tag?: string; urls?: { android?: string; windows?: string; linux?: string }; date: string; notes: string }[] };
   plans: Plan[];
   screenshots: string[];
   previewImageUrl?: string;
@@ -63,9 +63,16 @@ export function MarketplaceDetailClient({
   const screenshotRef = useRef<HTMLDivElement>(null);
   const { lang } = useLanguage();
   const copy = detailCopy[lang];
+  // Localized app content (BN auto-translated in background, English fallback).
+  const bn = lang === "bn" ? app.i18nBn ?? null : null;
+  const dispName = bn?.name || app.name;
+  const dispDesc = bn?.description || app.description;
+  const dispLong = bn?.description || app.longDescription;
+  const dispCategory = bn?.category || app.category;
+  const dispFeatures = bn?.features?.length ? bn.features : app.features;
 
   function getPlanFeatures(plan: Plan) {
-    const masterFeatures = app.features ?? [];
+    const masterFeatures = dispFeatures ?? [];
     const selected = new Set((plan.features ?? []).map((feature) => feature.trim().toLowerCase()));
     return masterFeatures.map((feature) => ({ text: feature, active: selected.has(feature.trim().toLowerCase()) }));
   }
@@ -136,7 +143,7 @@ export function MarketplaceDetailClient({
           <span>›</span>
           <Link href="/apps" className="hover:text-primary dark:hover:text-white">{copy.apps}</Link>
           <span>›</span>
-          <span className="text-ink dark:text-white/80">{app.name}</span>
+          <span className="text-ink dark:text-white/80">{dispName}</span>
         </nav>
       </div>
 
@@ -156,12 +163,12 @@ export function MarketplaceDetailClient({
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-bold text-ink dark:text-white sm:text-2xl">{app.name}</h1>
+                  <h1 className="text-xl font-bold text-ink dark:text-white sm:text-2xl">{dispName}</h1>
                   <span className="inline-flex items-center gap-1 rounded-full bg-[#8b5cf6]/10 px-2 py-0.5 text-[10px] font-bold text-[#8b5cf6] dark:bg-[#8b5cf6]/20 dark:text-[#a78bfa] border border-[#8b5cf6]/20">
                     <BadgeCheck size={12} /> {copy.verified}
                   </span>
                 </div>
-                <p className="text-xs font-medium text-[#0ea5e9] dark:text-[#38bdf8]">{app.category}</p>
+                <p className="text-xs font-medium text-[#0ea5e9] dark:text-[#38bdf8]">{dispCategory}</p>
                 <p className="text-xs text-ink/60 dark:text-white/60">KWL Nexus Team <BadgeCheck size={12} className="inline text-[#0ea5e9]" /></p>
                 <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
                   {app.rating ? <span className="flex items-center gap-1 font-semibold text-amber-500"><Star size={13} fill="currentColor" /> {app.rating}</span> : null}
@@ -171,7 +178,7 @@ export function MarketplaceDetailClient({
                 </div>
               </div>
             </div>
-            <p className="mt-4 text-sm leading-6 text-ink/60 dark:text-white/60">{app.description} Your intelligent productivity companion for everyday tasks. Chat with AI, summarize content, translate, generate ideas, manage notes and more — all in one powerful assistant.</p>
+            <p className="mt-4 text-sm leading-6 text-ink/60 dark:text-white/60">{dispDesc}</p>
             <div className="mt-4 space-y-3">
               {app.platforms.length > 0 ? (
                 <>
@@ -286,7 +293,7 @@ export function MarketplaceDetailClient({
                 [copy.version, app.versions?.[0]?.version ? `v${app.versions[0].version}` : "—"],
                 [copy.updated, app.updatedAt || "—"],
                 [copy.size, app.size || "—"],
-                [copy.category, app.category],
+                [copy.category, dispCategory],
                 [copy.developer, app.developer || "KWL Nexus"],
                 [copy.compatibility, app.platforms.length ? app.platforms.join(", ") : "—"],
               ].map(([k, v]) => (
@@ -405,10 +412,10 @@ export function MarketplaceDetailClient({
           {activeTab === "Overview" && (
             <div className="rounded-2xl border border-ink/10 bg-white p-5 dark:border-white/5 dark:bg-[#131a2e]">
               <h2 className="text-sm font-bold text-ink dark:text-white">{copy.aboutApp}</h2>
-              <p className="mt-3 text-sm leading-6 text-ink/60 dark:text-white/60">{app.longDescription}</p>
-              {(app.features ?? []).length > 0 && (
+              <p className="mt-3 text-sm leading-6 text-ink/60 dark:text-white/60">{dispLong}</p>
+              {(dispFeatures ?? []).length > 0 && (
                 <ul className="mt-4 space-y-2">
-                  {(app.features ?? []).slice(0, 6).map((f) => (
+                  {(dispFeatures ?? []).slice(0, 6).map((f) => (
                     <li key={f} className="flex items-center gap-2 text-xs text-ink/70 dark:text-white/70">
                       <span className="grid h-4 w-4 place-items-center rounded-full bg-[#8b5cf6] text-white"><Check size={10} /></span> {f}
                     </li>
@@ -419,9 +426,9 @@ export function MarketplaceDetailClient({
           )}
           <div className={`rounded-2xl border border-ink/10 bg-white p-5 dark:border-white/5 dark:bg-[#131a2e] ${activeTab === "Features" ? "lg:col-span-2" : ""}`}>
             <h2 className="text-sm font-bold text-ink dark:text-white">{copy.keyFeatures}</h2>
-            {(app.features ?? []).length > 0 ? (
+            {(dispFeatures ?? []).length > 0 ? (
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {(app.features ?? []).map((f, i) => (
+                {(dispFeatures ?? []).map((f, i) => (
                   <div key={`${f}-${i}`} className="flex gap-3 rounded-xl border border-ink/5 bg-paper/50 p-3 dark:border-white/5 dark:bg-white/[0.04]">
                     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#8b5cf6]/10 text-[#8b5cf6]"><Check size={15} /></span>
                     <p className="self-center text-xs font-bold leading-5 text-ink dark:text-white">{f}</p>

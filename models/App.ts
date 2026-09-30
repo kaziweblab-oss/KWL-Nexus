@@ -44,6 +44,15 @@ const AppSchema = new Schema(
     featuresUpdatedAt: { type: Date },
     newReleaseOrder: { type: Number, default: 0 },
     downloadCount: { type: Number, default: 0, index: true },
+    // Bengali auto-translation of master EN content (background-translated on save).
+    i18n: {
+      bn: {
+        name: String,
+        description: String,
+        category: String,
+        features: { type: [String], default: undefined },
+      },
+    },
     screenshots: { type: [String], default: [] },
     previewImageUrl: String,
     previewImages: { type: [String], default: [] },

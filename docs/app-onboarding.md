@@ -41,3 +41,8 @@ Tip: add `kwl-config.json` (`name, description, category, iconUrl, websiteUrl`) 
 ## 8. Developer integration (for app developers)
 - Give them the **PDF guide** (`/docs` → PDF guide): API key header, `POST /api/feedback` contract, tutorial caching, endpoint reference.
 - Desktop apps queue reports locally and retry — never block the app on Nexus downtime.
+
+## 9. Feedback loop (app <-> Nexus)
+- **App → Nexus:** desktop posts `POST /api/feedback` (`bug_report | suggestion | feature_request | rating`). Queue locally, retry on non-201.
+- **Nexus → App:** admin replies at `/admin/feedbacks` (`adminReply`, status `replied`/`resolved`/`ignored`). App polls `GET /api/feedback` (on Help screen open, not on a timer) and renders `adminReply` + `status` to the user.
+- Payload includes `link`, `contactEmail`, `rating`, `screenshot` — all optional, all visible to admins.
