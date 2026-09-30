@@ -6,12 +6,59 @@ import { Save, Plus, Trash2, Image as ImageIcon, Monitor, Video, Play } from "lu
 export function AppMediaManager({ appId }: { appId: string }) {
   const [screenshots, setScreenshots] = useState<string[]>([]);
   const [previewImageUrl, setPreviewImageUrl] = useState("");
+  const [previewFileMsg, setPreviewFileMsg] = useState("");
   const [previewVideoUrl, setPreviewVideoUrl] = useState("");
   const [screenshotVideo, setScreenshotVideo] = useState("");
+  const [videoFileMsg, setVideoFileMsg] = useState("");
   const [newShot, setNewShot] = useState("");
+  const [shotFileMsg, setShotFileMsg] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+
+  // Client-side image prep: resize to max 1280px JPEG (keeps DB + pages lean).
+  function prepImageFile(file: File, maxDim: number, maxBytes: number, done: (url: string) => void, fail: (m: string) => void) {
+    if (!file.type.startsWith("image/")) { fail("Only image files."); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.round(img.width * scale));
+          canvas.height = Math.max(1, Math.round(img.height * scale));
+          const ctx = canvas.getContext("2d");
+          if (!ctx) throw new Error("canvas");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const url = canvas.toDataURL("image/jpeg", 0.82);
+          if (url.length > maxBytes * 1.37 + 1000) { fail("Still too large after resize — use a smaller image or URL."); return; }
+          done(url);
+        } catch {
+          // Fallback: raw base64 when canvas fails (e.g. SVG without intrinsic size)
+          if (file.size > maxBytes) { fail("Image too large — use a smaller file or URL."); return; }
+          const fallback = new FileReader();
+          fallback.onload = () => done(String(fallback.result));
+          fallback.readAsDataURL(file);
+        }
+      };
+      img.onerror = () => fail("Could not read that image.");
+      img.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleVideoFile(file: File | undefined) {
+    if (!file) return;
+    if (!file.type.startsWith("video/")) { setVideoFileMsg("Only video files (mp4/webm)."); return; }
+    if (file.size > 20_000_000) { setVideoFileMsg("Video max 20MB — use a YouTube/unlisted link for bigger videos."); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setScreenshotVideo(String(reader.result));
+      setVideoFileMsg(`Loaded ${file.name} — Save Media to apply.`);
+    };
+    reader.readAsDataURL(file);
+  }
 
   useEffect(() => {
     fetch(`/api/admin/apps/${appId}/media`)
@@ -70,51 +117,55 @@ export function AppMediaManager({ appId }: { appId: string }) {
 
   return (
     <div className="rounded-2xl border border-ink/10 bg-white p-6 dark:border-white/10 dark:bg-[#1a1a2e]">
-      <h3 className="flex items-center gap-2 text-sm font-bold text-ink dark:text-white"><Monitor size={16} className="text-primary" /> Main Preview (Static Single)</h3>
-      <p className="mt-1 text-xs text-ink/60 dark:text-white/60">Center preview static single. Paste image URL or video URL (mp4/youtube). Only one will be shown static (no slide).</p>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        <label className="text-xs font-semibold text-ink/70 dark:text-white/70">Image URL<input value={previewImageUrl} onChange={(e) => setPreviewImageUrl(e.target.value)} placeholder="https://example.com/preview.png" className="mt-1 w-full rounded-xl border border-ink/10 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white" /></label>
-        <label className="text-xs font-semibold text-ink/70 dark:text-white/70">Video URL (optional)<input value={previewVideoUrl} onChange={(e) => setPreviewVideoUrl(e.target.value)} placeholder="https://example.com/preview.mp4 or youtube" className="mt-1 w-full rounded-xl border border-ink/10 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white" /></label>
+      <h3 className="flex items-center gap-2 text-sm font-bold text-ink dark:text-white"><Monitor size={16} className="text-primary" /> Main Preview (image only)</h3>
+      <p className="mt-1 text-xs text-ink/60 dark:text-white/60">Single static image. Upload a file or paste an image URL.</p>
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <label className="inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-ink/10 bg-paper px-4 text-sm font-semibold text-ink hover:border-primary/40 dark:border-white/10 dark:bg-white/5 dark:text-white">
+          Upload image
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) prepImageFile(f, 1280, 1_000_000, (url) => { setPreviewImageUrl(url); setPreviewFileMsg(`Loaded ${f.name} — Save Media to apply.`); }, setPreviewFileMsg); }} />
+        </label>
+        <input value={previewImageUrl.startsWith("data:") ? "" : previewImageUrl} onChange={(e) => { setPreviewImageUrl(e.target.value); setPreviewFileMsg(""); }} placeholder="…or paste image URL https://…" className="h-10 flex-1 rounded-xl border border-ink/10 bg-white px-3 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white" />
       </div>
-      {(previewImageUrl || previewVideoUrl) && (
+      {previewFileMsg && <p className="mt-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">{previewFileMsg}</p>}
+      {previewImageUrl && (
         <div className="mt-3 overflow-hidden rounded-xl border border-ink/10 dark:border-white/10">
-          {previewVideoUrl ? (
-            previewVideoUrl.includes("youtube") || previewVideoUrl.includes("vimeo") ? (
-              <div className="aspect-video w-full bg-black flex items-center justify-center text-white text-sm">Video Preview: {previewVideoUrl}</div>
-            ) : (
-              <video src={previewVideoUrl} controls className="max-h-64 w-full object-contain bg-black" />
-            )
-          ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={previewImageUrl} alt="Preview" className="max-h-64 w-full object-contain bg-[#0a0a14]" />
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={previewImageUrl} alt="Preview" className="max-h-64 w-full object-contain bg-[#0a0a14]" />
         </div>
       )}
 
-      <h3 className="mt-8 flex items-center gap-2 text-sm font-bold text-ink dark:text-white"><ImageIcon size={16} className="text-primary" /> Screenshots & Video</h3>
-      <p className="mt-1 text-xs text-ink/60 dark:text-white/60">Video can be uploaded here and will always be first, then screenshots. Paste video (mp4/youtube) or image URLs.</p>
-      <div className="mt-3 flex gap-2">
-        <div className="flex-1 flex gap-2">
-          <input value={screenshotVideo} onChange={(e) => setScreenshotVideo(e.target.value)} placeholder="Video URL (will be 1st) e.g. https://...mp4" className="flex-1 rounded-xl border border-ink/10 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white" />
-          <span className="inline-flex items-center gap-1 rounded-xl bg-primary/10 px-2 text-xs font-semibold text-primary dark:bg-secondary/20 dark:text-secondary whitespace-nowrap"><Video size={12} /> Video 1st</span>
-        </div>
+      <h3 className="mt-8 flex items-center gap-2 text-sm font-bold text-ink dark:text-white"><ImageIcon size={16} className="text-primary" /> Preview gallery (1 video + images)</h3>
+      <p className="mt-1 text-xs text-ink/60 dark:text-white/60">Video first, then preview images. Upload files or paste URLs (mp4/webm/youtube for video).</p>
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <label className="inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-ink/10 bg-paper px-4 text-sm font-semibold text-ink hover:border-primary/40 dark:border-white/10 dark:bg-white/5 dark:text-white">
+          Upload video
+          <input type="file" accept="video/mp4,video/webm" className="hidden" onChange={(e) => handleVideoFile(e.target.files?.[0])} />
+        </label>
+        <input value={screenshotVideo.startsWith("data:") ? "" : screenshotVideo} onChange={(e) => { setScreenshotVideo(e.target.value); setVideoFileMsg(""); }} placeholder="…or paste video URL (will be 1st) e.g. https://...mp4" className="h-10 flex-1 rounded-xl border border-ink/10 bg-white px-3 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white" />
+        <span className="inline-flex items-center gap-1 self-start rounded-xl bg-primary/10 px-2 py-2 text-xs font-semibold text-primary dark:bg-secondary/20 dark:text-secondary whitespace-nowrap sm:self-center"><Video size={12} /> Video 1st</span>
       </div>
+      {videoFileMsg && <p className="mt-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">{videoFileMsg}</p>}
       {screenshotVideo && (
         <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 p-3 dark:border-secondary/20 dark:bg-secondary/10">
-          <p className="flex items-center gap-2 text-xs font-semibold text-primary dark:text-secondary"><Play size={12} /> Video (1st): {screenshotVideo}</p>
+          <p className="flex items-center gap-2 text-xs font-semibold text-primary dark:text-secondary"><Play size={12} /> Video (1st): {screenshotVideo.startsWith("data:") ? screenshotVideo.slice(0, 60) + "… (uploaded file)" : screenshotVideo}</p>
         </div>
       )}
-      <div className="mt-3 flex gap-2">
-        <input value={newShot} onChange={(e) => setNewShot(e.target.value)} placeholder="Screenshot image URL https://..." className="flex-1 rounded-xl border border-ink/10 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white" />
-        <button onClick={addScreenshot} className="inline-flex items-center gap-1 rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-ink/90 dark:bg-white dark:text-ink">
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <label className="inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-ink/10 bg-paper px-4 text-sm font-semibold text-ink hover:border-primary/40 dark:border-white/10 dark:bg-white/5 dark:text-white">
+          Upload image
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) prepImageFile(f, 1280, 1_000_000, (url) => { setScreenshots((cur) => [...cur, url]); setShotFileMsg(`Loaded ${f.name} — Save Media to apply.`); }, setShotFileMsg); }} />
+        </label>
+        <input value={newShot} onChange={(e) => setNewShot(e.target.value)} placeholder="…or paste preview image URL https://..." className="h-10 flex-1 rounded-xl border border-ink/10 bg-white px-3 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white" />
+        <button onClick={addScreenshot} className="inline-flex h-10 items-center gap-1 rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-ink/90 dark:bg-white dark:text-ink">
           <Plus size={14} /> Add
         </button>
       </div>
+      {shotFileMsg && <p className="mt-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">{shotFileMsg}</p>}
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {screenshots.map((url, idx) => (
           <div key={idx} className="relative overflow-hidden rounded-xl border border-ink/10 bg-white p-2 dark:border-white/10 dark:bg-white/5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={url} alt={`Screenshot ${idx + 2}`} className="h-32 w-full rounded-lg object-cover" />
+            <img src={url} alt={`Preview ${idx + 2}`} className="h-32 w-full rounded-lg object-cover" />
             <span className="absolute left-3 top-3 rounded-full bg-ink px-2 py-0.5 text-xs font-bold text-white">#{idx + 2}</span>
             <button onClick={() => removeShot(idx)} className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-full bg-white text-red-600 shadow-md hover:bg-red-50 dark:bg-[#1a1a2e] dark:text-red-400">
               <Trash2 size={14} />
@@ -122,7 +173,7 @@ export function AppMediaManager({ appId }: { appId: string }) {
             <p className="mt-2 truncate text-xs text-ink/60 dark:text-white/60">{url}</p>
           </div>
         ))}
-        {screenshots.length === 0 && <p className="col-span-2 py-6 text-center text-sm text-ink/40">No screenshots yet. Add URLs above. Video will be #1 if set.</p>}
+        {screenshots.length === 0 && <p className="col-span-2 py-6 text-center text-sm text-ink/40">No preview images yet. Add uploads or URLs above. Video will be #1 if set.</p>}
       </div>
 
       <div className="mt-6 flex items-center gap-3">
