@@ -33,6 +33,7 @@ export default async function AppDetailPage({ params }: { params: { id: string }
     screenshots?: string[];
     previewImageUrl?: string;
     previewVideoUrl?: string;
+    tutorial?: { videoUrl?: string; videoType?: string; isActive?: boolean };
     screenshotVideos?: string[];
     downloadUrl?: { android?: string; windows?: string; linux?: string; apk?: string; exe?: string; deb?: string };
     size?: string;
@@ -127,7 +128,7 @@ export default async function AppDetailPage({ params }: { params: { id: string }
         reviewCount={reviewCount}
         screenshots={screenshots}
         previewImageUrl={dbApp.previewImageUrl}
-        previewVideoUrl={dbApp.previewVideoUrl}
+        previewVideoUrl={dbApp.previewVideoUrl || (dbApp.tutorial?.isActive === false ? undefined : dbApp.tutorial?.videoUrl)}
       />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {plans.length > 0 && <PaymentRequestForm appName={dbApp.name} amount={plans[0]?.price ?? "Free"} />}

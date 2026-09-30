@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth/auth";
 import { isAdminEmail } from "@/lib/auth/admin";
+import { authenticateApiRequest } from "@/lib/api/auth";
 import { connectToDatabase } from "@/lib/db/connect";
 import App from "@/models/App";
 
@@ -10,10 +11,14 @@ const tutorialSectionSchema = z.object({ heading: z.string().max(160).optional()
 
 const tutorialSchema = z.object({ videoUrl: z.string().url().max(2000).optional(), videoType: z.enum(["youtube", "vimeo", "custom"]).optional(), title: z.string().min(1).max(160).optional(), description: z.string().max(2000).optional(), isActive: z.boolean(), sections: z.array(tutorialSectionSchema).max(50).optional(), contentUpdatedAt: z.coerce.date().optional() });
 
-// Only allowlisted admins can publish or replace tutorial content.
+// Admins (session) or the app itself (x-api-key) can publish/replace tutorial content.
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email || !isAdminEmail(session.user.email)) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+  const viaAdmin = Boolean(session?.user?.email && isAdminEmail(session.user.email));
+  if (!viaAdmin) {
+    const auth = await authenticateApiRequest(request);
+    if ("error" in auth) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+  }
   const parsed = tutorialSchema.safeParse(await request.json());
   if (!parsed.success) return NextResponse.json({ error: "Invalid tutorial", details: parsed.error.flatten() }, { status: 400 });
   await connectToDatabase();
@@ -25,7 +30,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   const sections = (merged as { sections?: unknown[] }).sections;
   const hasSections = Array.isArray(sections) && sections.length > 0;
   if (parsed.data.isActive && !hasVideo && !hasSections) return NextResponse.json({ error: "Provide videoUrl or sections before publishing" }, { status: 400 });
-  const app = await App.findOneAndUpdate({ $or: [{ _id: params.id }, { slug: params.id }] }, { tutorial: { ...merged, contentUpdatedAt: new Date() } }, { new: true }).select("name slug tutorial").lean();
+  const app = await App.findOneAndUpdate({ $or: [{ _id: params.id }, { slug: params.id }] }, { $set: { tutorial: { ...merged, contentUpdatedAt: new Date() }, apiLastSeenAt: new Date() } }, { new: true }).select("name slug tutorial").lean();
   if (!app) return NextResponse.json({ error: "App not found" }, { status: 404 });
   return NextResponse.json({ data: app });
 }

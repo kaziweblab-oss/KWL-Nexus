@@ -19,6 +19,28 @@ const detailCopy = {
   },
 } as const;
 
+function youTubeId(url: string) {
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/);
+  return m?.[1] ?? null;
+}
+
+function vimeoId(url: string) {
+  const m = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  return m?.[1] ?? null;
+}
+
+function YouTubeEmbed({ url }: { url: string }) {
+  const id = youTubeId(url);
+  if (!id) return <div className="flex h-[220px] w-full items-center justify-center bg-black text-white text-sm">Video: {url}</div>;
+  return <iframe src={`https://www.youtube.com/embed/${id}`} title="Tutorial video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen className="h-[220px] w-full" />;
+}
+
+function VimeoEmbed({ url }: { url: string }) {
+  const id = vimeoId(url);
+  if (!id) return <div className="flex h-[220px] w-full items-center justify-center bg-black text-white text-sm">Video: {url}</div>;
+  return <iframe src={`https://player.vimeo.com/video/${id}`} title="Tutorial video" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen className="h-[220px] w-full" />;
+}
+
 export function MarketplaceDetailClient({
   app,
   plans,
@@ -210,8 +232,10 @@ export function MarketplaceDetailClient({
           <div className="relative overflow-hidden rounded-2xl border border-[#8b5cf6]/20 bg-white p-1 shadow-[0_8px_32px_rgba(139,92,246,0.08)] dark:border-[#8b5cf6]/30 dark:bg-gradient-to-br dark:from-[#0f0f2a] dark:to-[#0a0a1a] dark:shadow-[0_8px_32px_rgba(139,92,246,0.15)]">
             {previewVideoUrl ? (
               <div className="rounded-xl overflow-hidden bg-black">
-                {previewVideoUrl.includes("youtube") || previewVideoUrl.includes("vimeo") ? (
-                  <div className="flex h-[220px] w-full items-center justify-center bg-black text-white text-sm">Video: {previewVideoUrl}</div>
+                {previewVideoUrl.includes("youtube") || previewVideoUrl.includes("youtu.be") ? (
+                  <YouTubeEmbed url={previewVideoUrl} />
+                ) : previewVideoUrl.includes("vimeo") ? (
+                  <VimeoEmbed url={previewVideoUrl} />
                 ) : (
                   <video src={previewVideoUrl} controls className="h-[220px] w-full object-cover" />
                 )}
