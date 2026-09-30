@@ -34,9 +34,18 @@ Tip: add `kwl-config.json` (`name, description, category, iconUrl, websiteUrl`) 
 - After publish: verify store page, download per platform, tutorial, feedback form.
 
 ## 7. API keys (Admin → Settings → Project integrations → API keys)
-- Name is required. Secret shows once at creation; later reveal via **Show key** (admin only).
+- Name is required. Scope to one app when the key belongs to a desktop app (All apps = admin key).
+- Secret shows once at creation; later reveal via **Show key** (admin only).
 - **Revoke** disables (row kept); **Delete** removes permanently (confirm first).
 - Leaked key? Revoke immediately and generate a new one.
+
+## 7b. Key distribution — connecting an app properly
+1. **Save first:** import the repo (`/admin/apps/new`) → open the draft in the editor → **Use this release** → save details → **Publish**. Note the app slug (e.g. `kaziweblab-oss-kwl-video-downloader`).
+2. **Create the key:** Settings → API keys → name it (e.g. `KWL Video Downloader`) → scope = the app → **Generate** → **copy now** (shown once).
+3. **Deliver securely:** send the key through a secure channel only (password manager / encrypted chat) — never plain email/chat history. If it leaks, revoke + regenerate.
+4. **Configure the desktop app:** `baseUrl` (e.g. `https://kwl-nexus.onrender.com`), `apiKey`, `appId` (slug or ObjectId).
+5. **Verify:** app calls `POST /api/apps/<id>/ping` on startup → `{ data: { connected: true } }`. Editor Features section flips to Connected.
+6. **Sync:** app pushes `features` + `tutorial` after install/update; reports via `POST /api/feedback` (queued offline, retried); polls `GET /api/feedback` for admin replies.
 
 ## 8. Developer integration (for app developers)
 - Give them the **PDF guide** (`/docs` → PDF guide): API key header, `POST /api/feedback` contract, tutorial caching, endpoint reference.
