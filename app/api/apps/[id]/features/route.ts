@@ -26,6 +26,9 @@ export async function POST(request: Request, { params }: { params: { id: string 
   const app = await App.findOne(matchById(params.id));
   if (!app) return NextResponse.json({ error: "App not found" }, { status: 404 });
   app.features = parsed.data.features.map((f) => f.trim()).filter(Boolean);
+  app.featuresSource = "app";
+  app.featuresUpdatedAt = new Date();
+  app.apiLastSeenAt = new Date();
   await app.save();
   return NextResponse.json({ data: { count: app.features.length } }, { status: 200 });
 }

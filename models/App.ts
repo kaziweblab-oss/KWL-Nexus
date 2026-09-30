@@ -38,6 +38,10 @@ const AppSchema = new Schema(
     isNewRelease: { type: Boolean, default: false, index: true },
     newReleaseImageUrl: String,
     size: { type: String, trim: true },
+    // App-API sync metadata (desktop heartbeat + feature pushes).
+    apiLastSeenAt: { type: Date },
+    featuresSource: { type: String, enum: ["manual", "app"], default: "manual" },
+    featuresUpdatedAt: { type: Date },
     newReleaseOrder: { type: Number, default: 0 },
     downloadCount: { type: Number, default: 0, index: true },
     screenshots: { type: [String], default: [] },

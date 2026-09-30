@@ -23,6 +23,9 @@ type AppDoc = {
   githubRepo?: string;
   latestVersion?: string | null;
   features?: string[];
+  featuresSource?: "manual" | "app";
+  featuresUpdatedAt?: string | null;
+  apiLastSeenAt?: string | null;
   downloadUrl?: { android?: string; windows?: string; linux?: string };
   tutorial?: { videoUrl?: string; videoType?: "youtube" | "vimeo" | "custom"; title?: string; description?: string; isActive?: boolean };
 };
@@ -37,8 +40,14 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
   const [msg, setMsg] = useState("");
   const [form, setForm] = useState({ name: "", description: "", category: "", pricing: "free", websiteUrl: "", iconUrl: "" });
   const [msgKind, setMsgKind] = useState<"success" | "error" | "">("");
-  const [featuresText, setFeaturesText] = useState("");
   const [logoMsg, setLogoMsg] = useState("");
+
+  const featureList = app?.features ?? [];
+  const featuresDate = app?.featuresUpdatedAt ? new Date(app.featuresUpdatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
+  const connected = (() => {
+    if (!app?.apiLastSeenAt) return false;
+    return Date.now() - new Date(app.apiLastSeenAt).getTime() < 30 * 24 * 60 * 60 * 1000;
+  })();
 
   function handleLogoFile(file: File | undefined) {
     if (!file) return;
@@ -61,7 +70,6 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
       const d = j.data as AppDoc;
       setApp(d);
       setForm({ name: d.name ?? "", description: d.description ?? "", category: d.category ?? "", pricing: d.pricing ?? "free", websiteUrl: d.websiteUrl ?? "", iconUrl: d.iconUrl ?? "" });
-      setFeaturesText(Array.isArray(d.features) ? d.features.join("\n") : "");
       setError("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to load app");
@@ -92,29 +100,6 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
     } catch (e) {
       setMsg(e instanceof Error ? e.message : "Save failed");
       setMsgKind("error");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function saveFeatures(e: React.FormEvent) {
-    e.preventDefault();
-    if (!app) return;
-    const features = featuresText.split("\n").map((f) => f.trim()).filter(Boolean);
-    setSaving(true);
-    setMsg("");
-    try {
-      const res = await fetch(`/api/admin/apps/${encodeURIComponent(app.slug || app._id)}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ features }),
-      });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(typeof j.error === "string" ? j.error : "Save failed");
-      showToast("Features saved. Use them in Pricing plans.", "success");
-      void load();
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : "Save failed", "error");
     } finally {
       setSaving(false);
     }
@@ -228,11 +213,35 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
 
       <div className="mt-10">
         <h2 className="mb-5 text-2xl font-bold text-ink dark:text-white">Features</h2>
-        <p className="mb-4 text-sm text-ink/60 dark:text-white/60">One feature per line. Shown on the store page and available as toggles in Pricing plans. Desktop app sync overwrites this list on next update (last-write-wins).</p>
-        <form onSubmit={(e) => void saveFeatures(e)} className="rounded-2xl border border-ink/10 bg-white p-6 dark:border-white/10 dark:bg-[#1a1a2e]">
-          <textarea value={featuresText} onChange={(e) => setFeaturesText(e.target.value)} rows={6} placeholder={"Fast 4K downloads\nNo ads or trackers\nBatch queue with resume"} className="min-h-[140px] w-full resize-y rounded-xl border border-ink/10 bg-paper p-4 text-sm leading-6 text-ink outline-none dark:border-white/10 dark:bg-white/5 dark:text-white" />
-          <button disabled={saving} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"><Save size={15} /> {saving ? "Saving…" : "Save features"}</button>
-        </form>
+        <p className="mb-4 text-sm text-ink/60 dark:text-white/60">Sent by the desktop app itself — shown on the store page and available as toggles in Pricing plans.</p>
+        {connected ? (
+          <div className="rounded-2xl border border-ink/10 bg-white p-6 dark:border-white/10 dark:bg-[#1a1a2e]">
+            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" /> Connected{featuresDate ? ` · synced ${featuresDate}` : ""}
+            </p>
+            {featureList.length > 0 ? (
+              <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                {featureList.map((f) => (
+                  <li key={f} className="flex items-center gap-2 rounded-xl bg-paper px-3 py-2.5 text-sm font-medium text-ink dark:bg-white/5 dark:text-white">{f}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-4 rounded-xl border border-dashed border-ink/15 px-4 py-6 text-center text-sm text-ink/45 dark:border-white/10 dark:text-white/40">Connected, but no features received yet — the app will push its list on next update.</p>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-amber-400/40 bg-amber-400/10 p-6 dark:border-amber-400/30">
+            <p className="font-bold text-ink dark:text-white">Please connect this app with the Nexus API</p>
+            <p className="mt-2 text-sm leading-6 text-ink/60 dark:text-white/60">
+              Until the desktop app connects, no API features work (features sync, tutorial sync, reports). In the app settings paste the API key + appId
+              (<code className="rounded bg-ink/5 px-1 font-mono text-xs dark:bg-white/10">{app.slug || app._id}</code>), then the app pings
+              <code className="rounded bg-ink/5 px-1 font-mono text-xs dark:bg-white/10">POST /api/apps/{"<id>"}/ping</code> on startup. See the PDF guide for the full contract.
+            </p>
+            <Link href="/docs" className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary/90">
+              Open API docs <ArrowRight size={12} />
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="mt-10">
