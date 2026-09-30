@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, Loader2, Rocket, Save } from "lucide-react";
+import { ArrowLeft, ArrowRight, ExternalLink, Loader2, Rocket, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { TutorialEditor } from "@/components/admin/TutorialEditor";
@@ -194,7 +194,16 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
           <label className="block text-sm font-semibold text-ink/60 dark:text-white/60">Description<textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required rows={4} className="mt-2 min-h-[112px] w-full resize-none rounded-xl border border-ink/10 bg-paper p-4 text-sm text-ink outline-none dark:border-white/10 dark:bg-white/5 dark:text-white" /></label>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm font-semibold text-ink/60 dark:text-white/60">Category<input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required className="mt-2 h-11 w-full rounded-xl border border-ink/10 bg-paper px-4 text-sm text-ink outline-none dark:border-white/10 dark:bg-white/5 dark:text-white" /></label>
-            <label className="block text-sm font-semibold text-ink/60 dark:text-white/60">Pricing<select value={form.pricing} onChange={(e) => setForm({ ...form, pricing: e.target.value })} className="mt-2 h-11 w-full rounded-xl border border-ink/10 bg-paper px-4 text-sm text-ink outline-none dark:border-white/10 dark:bg-white/5 dark:text-white"><option value="free">free</option><option value="paid">paid</option><option value="freemium">freemium</option></select></label>
+            <div>
+              <p className="block text-sm font-semibold text-ink/60 dark:text-white/60">Pricing</p>
+              <div className="mt-2 flex h-11 items-center justify-between gap-3 rounded-xl border border-ink/10 bg-paper px-4 dark:border-white/10 dark:bg-white/5">
+                <span className="text-sm font-semibold capitalize text-ink dark:text-white">{form.pricing || "free"}</span>
+                <Link href={`/admin/pricing?app=${encodeURIComponent(app.slug || app._id)}`} className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-1.5 text-xs font-bold text-white hover:bg-primary/90">
+                  Manage pricing <ArrowRight size={12} />
+                </Link>
+              </div>
+              <p className="mt-1.5 text-[11px] text-ink/45 dark:text-white/40">Auto-set from plans (free / freemium / paid).</p>
+            </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm font-semibold text-ink/60 dark:text-white/60">Website URL<input value={form.websiteUrl} onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })} placeholder="https://…" className="mt-2 h-11 w-full rounded-xl border border-ink/10 bg-paper px-4 text-sm text-ink outline-none dark:border-white/10 dark:bg-white/5 dark:text-white" /></label>

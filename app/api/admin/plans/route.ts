@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth/auth";
 import { isAdmin } from "@/lib/auth/admin";
 import { connectToDatabase } from "@/lib/db/connect";
 import Plan from "@/models/Plan";
+import { syncAppPricing } from "@/lib/admin/pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -48,5 +49,6 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   const slug = parsed.data.slug ?? `${parsed.data.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
   const plan = await Plan.create({ ...parsed.data, slug });
+  await syncAppPricing(parsed.data.appId ?? null);
   return NextResponse.json({ data: plan }, { status: 201 });
 }

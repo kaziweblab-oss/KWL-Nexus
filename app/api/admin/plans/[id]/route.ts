@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth/auth";
 import { isAdmin } from "@/lib/auth/admin";
 import { connectToDatabase } from "@/lib/db/connect";
 import Plan from "@/models/Plan";
+import { syncAppPricing } from "@/lib/admin/pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -33,15 +34,17 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   const body = await request.json().catch(() => ({}));
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  const plan = await Plan.findByIdAndUpdate(params.id, { $set: parsed.data }, { new: true }).lean();
+  const plan = await Plan.findByIdAndUpdate(params.id, { $set: parsed.data }, { new: true }).lean() as unknown as { appId?: string; appSlug?: string } | null;
   if (!plan) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  await syncAppPricing(plan.appId ?? plan.appSlug ?? null);
   return NextResponse.json({ data: plan });
 }
 
 export async function DELETE(_: Request, { params }: { params: { id: string } }) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-  const plan = await Plan.findByIdAndDelete(params.id).lean();
+  const plan = await Plan.findByIdAndDelete(params.id).lean() as unknown as { appId?: string; appSlug?: string } | null;
   if (!plan) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  await syncAppPricing(plan.appId ?? plan.appSlug ?? null);
   return NextResponse.json({ data: plan });
 }

@@ -11,9 +11,9 @@ const emptyForm: Form = { name: "", description: "", price: "", interval: "month
 
 type RealApp = { _id: string; slug: string; name: string; features?: string[] };
 
-export function PricingManager() {
+export function PricingManager({ initialApp = "" }: { initialApp?: string }) {
   const { t } = useLanguage();
-  const [selectedApp, setSelectedApp] = useState(""); const [plans, setPlans] = useState<Plan[]>([]); const [loading, setLoading] = useState(false); const [editing, setEditing] = useState<Plan | null>(null); const [form, setForm] = useState<Form>(emptyForm); const [features, setFeatures] = useState<string[]>([]);
+  const [selectedApp, setSelectedApp] = useState(initialApp); const [plans, setPlans] = useState<Plan[]>([]); const [loading, setLoading] = useState(false); const [editing, setEditing] = useState<Plan | null>(null); const [form, setForm] = useState<Form>(emptyForm); const [features, setFeatures] = useState<string[]>([]);
   const [realApps, setRealApps] = useState<RealApp[]>([]);
   const [appsLoading, setAppsLoading] = useState(true);
   useEffect(() => {
