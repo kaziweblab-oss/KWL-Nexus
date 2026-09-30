@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth/auth";
 import { isAdminEmail } from "@/lib/auth/admin";
-import { authenticateApiRequest } from "@/lib/api/auth";
+import { authenticateApiRequest, assertKeyScope, touchKeyApp } from "@/lib/api/auth";
 import { connectToDatabase } from "@/lib/db/connect";
 import App from "@/models/App";
 
@@ -15,9 +15,13 @@ const tutorialSchema = z.object({ videoUrl: z.string().url().max(2000).optional(
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   const viaAdmin = Boolean(session?.user?.email && isAdminEmail(session.user.email));
+  let keyId: string | undefined;
   if (!viaAdmin) {
     const auth = await authenticateApiRequest(request);
     if ("error" in auth) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    const scoped = await assertKeyScope(auth, { slug: params.id, id: params.id }).catch(() => null);
+    if (scoped) return NextResponse.json({ error: scoped.error }, { status: scoped.status });
+    if ("apiKeyId" in auth) keyId = auth.apiKeyId;
   }
   const parsed = tutorialSchema.safeParse(await request.json());
   if (!parsed.success) return NextResponse.json({ error: "Invalid tutorial", details: parsed.error.flatten() }, { status: 400 });
@@ -30,7 +34,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   const sections = (merged as { sections?: unknown[] }).sections;
   const hasSections = Array.isArray(sections) && sections.length > 0;
   if (parsed.data.isActive && !hasVideo && !hasSections) return NextResponse.json({ error: "Provide videoUrl or sections before publishing" }, { status: 400 });
-  const app = await App.findOneAndUpdate({ $or: [{ _id: params.id }, { slug: params.id }] }, { $set: { tutorial: { ...merged, contentUpdatedAt: new Date() }, apiLastSeenAt: new Date() } }, { new: true }).select("name slug tutorial").lean();
+  const app = await App.findOneAndUpdate({ $or: [{ _id: params.id }, { slug: params.id }] }, { $set: { tutorial: { ...merged, contentUpdatedAt: new Date() }, apiLastSeenAt: new Date() } }, { new: true }).select("name slug tutorial").lean() as unknown as { slug?: string } | null;
   if (!app) return NextResponse.json({ error: "App not found" }, { status: 404 });
+  if (keyId && app?.slug) touchKeyApp(keyId, app.slug);
   return NextResponse.json({ data: app });
 }

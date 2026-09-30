@@ -40,6 +40,35 @@ export function decryptApiKeySecret(payload: string) {
   return Buffer.concat([decipher.update(Buffer.from(dataHex, "hex")), decipher.final()]).toString("utf8");
 }
 
+// Record which app a key last called (non-blocking, never throws). Powers key "used by" cards.
+export function touchKeyApp(apiKeyId: string | undefined, slug: string | undefined) {
+  if (!apiKeyId || !slug) return;
+  try {
+    void ApiKey.updateOne({ _id: apiKeyId }, { lastAppSlug: slug.toLowerCase(), lastAppAt: new Date() }).exec().catch(() => {});
+  } catch {}
+}
+// Returns null when allowed, otherwise an error response descriptor.
+export async function assertKeyScope(
+  auth: { userId?: string; apiKeyId?: string; appScope?: string | null },
+  appRef: { slug?: string; id?: string },
+): Promise<{ error: string; status: 403 } | null> {
+  const scope = auth.appScope;
+  if (!auth.apiKeyId || !scope) return null; // sessions + unscoped keys: all apps
+  const want = (appRef.slug ?? "").toLowerCase();
+  if (want && want === scope.toLowerCase()) return null;
+  // Also accept ObjectId: resolve the scoped slug to compare ids.
+  if (appRef.id) {
+    try {
+      const { connectToDatabase } = await import("@/lib/db/connect");
+      await connectToDatabase();
+      const App = (await import("@/models/App")).default;
+      const scoped = await App.findOne({ slug: scope }).select("_id").lean() as unknown as { _id?: { toString(): string } } | null;
+      if (scoped?._id && String(scoped._id) === appRef.id) return null;
+    } catch {}
+  }
+  return { error: "This API key is scoped to another app", status: 403 };
+}
+
 export async function authenticateApiRequest(request: Request) {
   const raw = request.headers.get("x-api-key") ?? request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (raw) {
@@ -52,7 +81,7 @@ export async function authenticateApiRequest(request: Request) {
     requestWindows.set(apiKey.id, nextWindow);
     if (nextWindow.count > (apiKey.rateLimitPerHour ?? 1000)) return { error: "Rate limit exceeded", status: 429 as const };
     await ApiKey.updateOne({ _id: apiKey._id }, { lastUsedAt: new Date() });
-    return { userId: apiKey.userId.toString(), apiKeyId: apiKey.id };
+    return { userId: apiKey.userId.toString(), apiKeyId: apiKey.id, appScope: (apiKey.appId as string | null) ?? null };
   }
   const session = await getServerSession(authOptions);
   if (session?.user?.email) {

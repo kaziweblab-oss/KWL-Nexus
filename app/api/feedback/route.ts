@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { authenticateApiRequest } from "@/lib/api/auth";
+import { authenticateApiRequest, assertKeyScope } from "@/lib/api/auth";
 import { connectToDatabase } from "@/lib/db/connect";
 import Feedback from "@/models/Feedback";
 
@@ -21,7 +21,25 @@ export async function POST(request: Request) {
     const parsed = feedbackSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: "Invalid feedback", details: parsed.error.flatten() }, { status: 400 });
     await connectToDatabase();
+    // Scoped keys may only report for their own app (body appId is an ObjectId string).
+    if ("apiKeyId" in auth) {
+      const scoped = await assertKeyScope(auth, { id: parsed.data.appId }).catch(() => null);
+      if (scoped) return NextResponse.json({ error: scoped.error }, { status: scoped.status });
+    }
     const feedback = await Feedback.create({ ...parsed.data, userId: auth.userId, status: "pending" });
+    // Track which app this key serves (fire-and-forget slug lookup).
+    if ("apiKeyId" in auth && !process.env.JEST_WORKER_ID && process.env.NODE_ENV !== "test") {
+      const keyId = auth.apiKeyId;
+      const appObjectId = parsed.data.appId;
+      void (async () => {
+        try {
+          const App = (await import("@/models/App")).default;
+          const a = await App.findById(appObjectId).select("slug").lean() as unknown as { slug?: string } | null;
+          const { touchKeyApp } = await import("@/lib/api/auth");
+          if (a?.slug) touchKeyApp(keyId, a.slug);
+        } catch {}
+      })();
+    }
     // Dashboard triage: fire-and-forget so notification DB writes never delay the 201 response.
     // Skipped in tests to avoid open mongoose handles (connect is mocked there).
     if (!process.env.JEST_WORKER_ID && process.env.NODE_ENV !== "test") {
