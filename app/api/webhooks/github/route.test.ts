@@ -4,8 +4,19 @@
 process.env.GITHUB_WEBHOOK_SECRET = "test-secret";
 
 jest.mock("@/lib/db/connect", () => ({ connectToDatabase: jest.fn().mockResolvedValue(undefined) }));
-const mockUpsert = jest.fn().mockResolvedValue({});
-jest.mock("@/models/Release", () => ({ __esModule: true, default: { findOneAndUpdate: (...args: any[]) => (mockUpsert as any)(...args) } }));
+const mockUpsert = jest.fn().mockResolvedValue({ _id: "rel1" });
+const mockReleaseUpdate = jest.fn().mockResolvedValue({});
+jest.mock("@/models/Release", () => ({
+  __esModule: true,
+  default: {
+    findOneAndUpdate: (...args: any[]) => (mockUpsert as any)(...args),
+    updateOne: (...args: any[]) => (mockReleaseUpdate as any)(...args),
+  },
+}));
+jest.mock("@/models/App", () => ({
+  __esModule: true,
+  default: { findOne: () => ({ select: () => ({ lean: () => Promise.resolve({ _id: "app1" }) }) }) },
+}));
 
 import crypto from "node:crypto";
 import { POST } from "./route";
@@ -50,6 +61,7 @@ test("upserts a valid published release (idempotent by unique tag)", async () =>
   const res: any = await POST(req(payload, signed(payload)));
   expect(res.status).toBe(200);
   expect(mockUpsert).toHaveBeenCalled();
+  expect(mockReleaseUpdate).toHaveBeenCalledWith({ _id: "rel1" }, { $set: { appId: "app1" } });
   const json = await res.json();
   expect(json).toEqual({ received: true, tag: "v1.2.3" });
 });

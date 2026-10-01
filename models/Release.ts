@@ -10,6 +10,8 @@ const ReleaseSchema = new Schema(
     name: String,
     body: String,
     publishedAt: Date,
+    prerelease: { type: Boolean, default: false },
+    draft: { type: Boolean, default: false },
     assets: [
       {
         name: String,

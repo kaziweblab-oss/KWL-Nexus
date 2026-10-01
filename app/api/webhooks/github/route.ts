@@ -4,7 +4,7 @@ import { connectToDatabase } from "@/lib/db/connect";
 import Release from "@/models/Release";
 import { detectPlatform, detectArch } from "@/lib/github/client";
 
-type GithubReleasePayload = { action: string; release?: { tag_name: string; name: string | null; body: string | null; published_at: string | null; assets: { name: string; browser_download_url: string; content_type: string; size: number }[]; target_commitish: string }; repository?: { name: string; owner: { login: string } } };
+type GithubReleasePayload = { action: string; release?: { tag_name: string; name: string | null; body: string | null; published_at: string | null; prerelease?: boolean; draft?: boolean; assets: { name: string; browser_download_url: string; content_type: string; size: number }[]; target_commitish: string }; repository?: { name: string; owner: { login: string } } };
 
 function isValidSignature(payload: string, signature: string | null) {
   const secret = process.env.GITHUB_WEBHOOK_SECRET;
@@ -42,6 +42,16 @@ export async function POST(request: Request) {
   if (!isValidTag(tag)) return NextResponse.json({ received: true, ignored: true });
   if (!isAllowedRepo(owner, repo)) return NextResponse.json({ received: true, ignored: true });
   await connectToDatabase();
-  await Release.findOneAndUpdate({ githubOwner: owner, githubRepo: repo, tagName: tag }, { githubOwner: owner, githubRepo: repo, tagName: tag, name: data.release.name, body: data.release.body, publishedAt: data.release.published_at, assets: data.release.assets.filter((asset) => ["Android", "Windows", "Linux"].includes(detectPlatform(asset.name))).map((asset) => ({ name: asset.name, url: asset.browser_download_url, contentType: asset.content_type, size: asset.size, platform: detectPlatform(asset.name), arch: detectArch(asset.name) })) }, { upsert: true, new: true });
+  const release = await Release.findOneAndUpdate({ githubOwner: owner, githubRepo: repo, tagName: tag }, { githubOwner: owner, githubRepo: repo, tagName: tag, name: data.release.name, body: data.release.body, publishedAt: data.release.published_at, prerelease: data.release.prerelease ?? false, draft: data.release.draft ?? false, assets: data.release.assets.filter((asset) => ["Android", "Windows", "Linux"].includes(detectPlatform(asset.name))).map((asset) => ({ name: asset.name, url: asset.browser_download_url, contentType: asset.content_type, size: asset.size, platform: detectPlatform(asset.name), arch: detectArch(asset.name) })) }, { upsert: true, new: true });
+  // Link to the catalog app so admin lists and update APIs can join by app.
+  // Pointer promotion (App.latestVersion) stays a manual admin action — webhooks
+  // never auto-publish, so a bad tag cannot push a broken "latest" to users.
+  try {
+    const App = (await import("@/models/App")).default;
+    const app = await App.findOne({ githubOwner: owner, githubRepo: repo }).select("_id").lean() as { _id: unknown } | null;
+    if (app && !(release as { appId?: unknown }).appId) {
+      await Release.updateOne({ _id: (release as { _id: unknown })._id }, { $set: { appId: app._id } });
+    }
+  } catch {}
   return NextResponse.json({ received: true, tag });
 }

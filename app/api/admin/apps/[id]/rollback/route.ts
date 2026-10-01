@@ -40,6 +40,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
   if (notes) app.description = app.description;
   await app.save();
 
+  // Rotate the current flag — exactly one AppVersion stays current per app.
+  await AppVersion.updateMany({ appId: params.id, isCurrent: true }, { $set: { isCurrent: false } });
   await AppVersion.create({
     appId: params.id,
     version: rollbackTo,
