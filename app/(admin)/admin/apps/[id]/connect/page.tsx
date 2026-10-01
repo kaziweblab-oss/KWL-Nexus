@@ -6,24 +6,37 @@ import { useEffect, useState } from "react";
 
 type AppDoc = { _id: string; name: string; slug: string; apiLastSeenAt?: string | null };
 
-function CopyLine({ label, value, mono = true }: { label: string; value: string; mono?: boolean }) {
-  const [copied, setCopied] = useState(false);
-  async function copy() {
+function CopyPair({ label, value, mono = true }: { label: string; value: string; mono?: boolean }) {
+  const [copied, setCopied] = useState("");
+  async function copy(text: string, tag: string) {
     try {
-      await navigator.clipboard.writeText(value);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(text);
+      setCopied(tag);
+      setTimeout(() => setCopied(""), 2000);
     } catch {}
   }
+  const cell = "flex min-w-0 items-center justify-between gap-2 rounded-xl bg-ink px-4 py-3 dark:bg-black/40";
+  const tag = (t: string, v: string) => (
+    <button key={t} onClick={() => void copy(v, `${label}-${t}`)} title={`Copy ${t.toLowerCase()}`} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white">
+      {copied === `${label}-${t}` ? <Check size={15} className="text-emerald-400" /> : <Copy size={15} />}
+    </button>
+  );
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl bg-ink px-4 py-3 dark:bg-black/40">
-      <div className="min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">{label}</p>
-        <p className={`truncate text-sm font-semibold text-white ${mono ? "font-mono" : ""}`}>{value}</p>
+    <div className="grid min-w-0 grid-cols-1 gap-2 lg:grid-cols-2">
+      <div className={cell}>
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Key</p>
+          <p className="truncate text-sm font-bold tracking-wide text-white">{label}</p>
+        </div>
+        {tag("Key", label)}
       </div>
-      <button onClick={() => void copy()} title={`Copy ${label}`} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white">
-        {copied ? <Check size={15} className="text-emerald-400" /> : <Copy size={15} />}
-      </button>
+      <div className={cell}>
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Value</p>
+          <p className={`break-all text-sm font-semibold text-white ${mono ? "font-mono" : ""}`}>{value}</p>
+        </div>
+        {tag("Value", value)}
+      </div>
     </div>
   );
 }
@@ -73,34 +86,38 @@ export default function AppConnectPage({ params }: { params: { id: string } }) {
     {
       n: "2",
       title: "Configure the desktop app",
-      body: "Paste these three values into the app settings (Nexus section).",
+      body: "Paste these three pairs into the app settings (Nexus section).",
       values: [
-        { label: "appId", value: slug },
-        { label: "baseUrl", value: "https://kwl-nexus.onrender.com" },
-        { label: "apiKey", value: "<paste-the-key-here>" },
+        { label: "APPID", value: slug },
+        { label: "BASEURL", value: "https://kwl-nexus.onrender.com" },
+        { label: "APIKEY", value: "<paste-the-key-here>" },
       ],
     },
     {
       n: "3",
       title: "Verify the connection",
       body: "The app calls this on startup. A 200 with connected:true means the editor flips to Connected.",
-      values: [{ label: "ping", value: `POST /api/apps/${slug}/ping  +  x-api-key header` }],
+      values: [
+        { label: "METHOD", value: "POST" },
+        { label: "PATH", value: `/api/apps/${slug}/ping` },
+        { label: "HEADER", value: "x-api-key: <key>" },
+      ],
     },
     {
       n: "4",
       title: "Sync data + reports",
       body: "After install/update the app pushes features + tutorial, reports user issues, and polls replies.",
       values: [
-        { label: "features", value: `POST /api/apps/${slug}/features` },
-        { label: "tutorial", value: `PUT /api/admin/apps/${slug}/tutorial` },
-        { label: "report", value: "POST /api/feedback" },
-        { label: "replies", value: "GET /api/feedback" },
+        { label: "FEATURES", value: `POST /api/apps/${slug}/features` },
+        { label: "TUTORIAL", value: `PUT /api/admin/apps/${slug}/tutorial` },
+        { label: "REPORT", value: "POST /api/feedback" },
+        { label: "REPLIES", value: "GET /api/feedback" },
       ],
     },
   ];
 
   return (
-    <main className="mx-auto max-w-3xl">
+    <main className="mx-auto w-full min-w-0 max-w-3xl overflow-x-clip">
       <Link href={`/admin/apps/${slug}/edit`} className="flex items-center gap-2 text-sm font-semibold text-ink/50 hover:text-primary dark:text-white/50"><ArrowLeft size={16} /> Back to editor</Link>
       <p className="mt-10 text-sm font-bold uppercase tracking-[0.22em] text-primary">API connection</p>
       <h1 className="mt-3 flex items-center gap-3 text-4xl font-bold tracking-tight text-ink dark:text-white">
@@ -119,7 +136,7 @@ export default function AppConnectPage({ params }: { params: { id: string } }) {
               <h2 className="text-lg font-bold text-ink dark:text-white">{s.title}</h2>
             </div>
             <p className="mt-3 text-sm leading-6 text-ink/60 dark:text-white/60">{s.body}</p>
-            {s.values && <div className="mt-4 grid gap-2">{s.values.map((v) => <CopyLine key={v.label} label={v.label} value={v.value} />)}</div>}
+            {s.values && <div className="mt-4 grid gap-2">{s.values.map((v) => <CopyPair key={v.label} label={v.label} value={v.value} />)}</div>}
             {s.action && (
               <Link href={s.action.href} className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary/90">
                 <s.action.Icon size={14} /> {s.action.label} <ArrowRight size={12} />
