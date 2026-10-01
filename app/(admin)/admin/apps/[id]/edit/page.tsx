@@ -141,7 +141,7 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
 
   const key = app.slug || app._id;
   return (
-    <main>
+    <main className="w-full min-w-0 overflow-x-clip">
       <Link href="/admin/apps" className="flex items-center gap-2 text-sm font-semibold text-ink/50 hover:text-primary dark:text-white/50"><ArrowLeft size={16} /> Back to apps</Link>
       <div className="mt-10 flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -177,7 +177,7 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
         <form onSubmit={(e) => void saveDetails(e)} className="grid gap-4 rounded-2xl border border-ink/10 bg-white p-6 dark:border-white/10 dark:bg-[#1a1a2e]">
           <label className="block text-sm font-semibold text-ink/60 dark:text-white/60">Name<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="mt-2 h-11 w-full rounded-xl border border-ink/10 bg-paper px-4 text-sm text-ink outline-none dark:border-white/10 dark:bg-white/5 dark:text-white" /></label>
           <label className="block text-sm font-semibold text-ink/60 dark:text-white/60">Description<textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required rows={4} className="mt-2 min-h-[112px] w-full resize-none rounded-xl border border-ink/10 bg-paper p-4 text-sm text-ink outline-none dark:border-white/10 dark:bg-white/5 dark:text-white" /></label>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 [&>*]:min-w-0">
             <label className="block text-sm font-semibold text-ink/60 dark:text-white/60">Category<input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required className="mt-2 h-11 w-full rounded-xl border border-ink/10 bg-paper px-4 text-sm text-ink outline-none dark:border-white/10 dark:bg-white/5 dark:text-white" /></label>
             <div>
               <p className="block text-sm font-semibold text-ink/60 dark:text-white/60">Pricing</p>
@@ -190,7 +190,7 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
               <p className="mt-1.5 text-[11px] text-ink/45 dark:text-white/40">Auto-set from plans (free / freemium / paid).</p>
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 [&>*]:min-w-0">
             <label className="block text-sm font-semibold text-ink/60 dark:text-white/60">Website URL<input value={form.websiteUrl} onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })} placeholder="https://…" className="mt-2 h-11 w-full rounded-xl border border-ink/10 bg-paper px-4 text-sm text-ink outline-none dark:border-white/10 dark:bg-white/5 dark:text-white" /></label>
             <div className="text-sm font-semibold text-ink/60 dark:text-white/60">
               <p>App logo</p>
@@ -234,8 +234,8 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
             <p className="font-bold text-ink dark:text-white">Please connect this app with the Nexus API</p>
             <p className="mt-2 text-sm leading-6 text-ink/60 dark:text-white/60">
               Until the desktop app connects, no API features work (features sync, tutorial sync, reports). In the app settings paste the API key + appId
-              (<code className="rounded bg-ink/5 px-1 font-mono text-xs dark:bg-white/10">{app.slug || app._id}</code>), then the app pings
-              <code className="rounded bg-ink/5 px-1 font-mono text-xs dark:bg-white/10">POST /api/apps/{"<id>"}/ping</code> on startup. See the PDF guide for the full contract.
+              (<code className="break-all rounded bg-ink/5 px-1 font-mono text-xs dark:bg-white/10">{app.slug || app._id}</code>), then the app pings
+              <code className="break-all rounded bg-ink/5 px-1 font-mono text-xs dark:bg-white/10">POST /api/apps/{"<id>"}/ping</code> on startup. See the PDF guide for the full contract.
             </p>
             <Link href={`/admin/apps/${app.slug || app._id}/connect`} className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary/90">
               Open connect guide <ArrowRight size={12} />
