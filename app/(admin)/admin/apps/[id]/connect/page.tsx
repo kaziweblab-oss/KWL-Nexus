@@ -22,16 +22,16 @@ function CopyPair({ label, value, mono = true }: { label: string; value: string;
     </button>
   );
   return (
-    <div className="grid min-w-0 grid-cols-1 gap-2 lg:grid-cols-2">
+    <div className="grid min-w-0 grid-cols-1 gap-2 overflow-hidden rounded-2xl border border-ink/10 bg-paper/40 p-2 dark:border-white/10 dark:bg-white/[0.02] sm:grid-cols-2">
       <div className={cell}>
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Key</p>
           <p className="truncate text-sm font-bold tracking-wide text-white">{label}</p>
         </div>
         {tag("Key", label)}
       </div>
       <div className={cell}>
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Value</p>
           <p className={`break-all text-sm font-semibold text-white ${mono ? "font-mono" : ""}`}>{value}</p>
         </div>
