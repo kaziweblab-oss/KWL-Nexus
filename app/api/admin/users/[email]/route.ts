@@ -5,6 +5,7 @@ import { isAdmin } from "@/lib/auth/admin";
 import { connectToDatabase } from "@/lib/db/connect";
 import User from "@/models/User";
 import Subscription from "@/models/Subscription";
+import Entitlement from "@/models/Entitlement";
 import Plan from "@/models/Plan";
 import Notification from "@/models/Notification";
 import { isSuperAdmin } from "@/lib/auth/admin";
@@ -106,6 +107,8 @@ export async function PATCH(request: Request, { params }: { params: { email: str
       user.isBlocked = body.isBlocked;
       if (body.isBlocked) {
         await Subscription.updateMany({ userId: user._id, status: "active" }, { $set: { status: "cancelled", endsAt: new Date(), endDate: new Date() } });
+        // Blocking must also revoke download access immediately.
+        await Entitlement.updateMany({ userId: user._id, status: "active" }, { $set: { status: "revoked" } });
         const blockMsg = body.reason?.trim() ? `You have been blocked from all apps: ${body.reason.trim()}` : "Your account has been blocked from all apps by admin.";
         await Notification.create({ userId: user._id, email: user.email, title: "Blocked from all apps", message: blockMsg, type: "block", appId: "all", appName: "All apps", read: false });
         if (adminEmail) {
@@ -131,6 +134,7 @@ export async function PATCH(request: Request, { params }: { params: { email: str
         const plans = await Plan.find({ $or: [{ appId: body.appId }, { appSlug: body.appId }] }).select("_id").lean<{ _id: unknown }[]>();
         const ids = plans.map((p) => p._id);
         if (ids.length) await Subscription.updateMany({ userId: user._id, planId: { $in: ids }, status: "active" }, { $set: { status: "cancelled", endsAt: new Date() } });
+        await Entitlement.updateMany({ userId: user._id, appSlug: String(body.appId).toLowerCase(), status: "active" }, { $set: { status: "revoked" } });
         const msg = body.reason?.trim() ? `You have been blocked from ${displayName} (${body.appId}): ${body.reason.trim()}` : `You have been blocked from ${displayName} by admin.`;
         await Notification.create({ userId: user._id, email: user.email, title: `Blocked from ${displayName}`, message: msg, type: "block", appId: body.appId, appName: displayName, read: false });
         if (adminEmail) {

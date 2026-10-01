@@ -3,6 +3,7 @@ import { z } from "zod";
 import { connectToDatabase } from "@/lib/db/connect";
 import Otp from "@/models/Otp";
 import { getMemoryOtp, bumpMemoryOtpAttempts } from "@/lib/otp/memory";
+import { checkRateLimit, clientIp } from "@/lib/auth/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,15 @@ export async function POST(req: NextRequest) {
     if (channel === "phone" && !rawPhone) channel = "email";
     const target = channel === "phone" ? rawPhone! : rawEmail!;
     const code = parsed.data.code.trim();
+
+    // Slow down distributed guessing (per-code attempts are enforced below at 5).
+    const ip = clientIp(req);
+    if (!checkRateLimit(`otp-verify:ip:${ip}`, 30, 15 * 60 * 1000)) {
+      return NextResponse.json({ error: "Too many attempts. Please try again later." }, { status: 429 });
+    }
+    if (!checkRateLimit(`otp-verify:target:${channel}:${target}`, 20, 15 * 60 * 1000)) {
+      return NextResponse.json({ error: "Too many attempts. Please try again later." }, { status: 429 });
+    }
 
     // Try DB first, fallback to memory. Failed attempts are counted so codes
     // cannot be brute-forced (limit 5 per code).

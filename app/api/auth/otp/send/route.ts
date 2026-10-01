@@ -3,40 +3,15 @@ import { z } from "zod";
 import { connectToDatabase } from "@/lib/db/connect";
 import Otp from "@/models/Otp";
 import { setMemoryOtp } from "@/lib/otp/memory";
+import { checkRateLimit, clientIp } from "@/lib/auth/rateLimit";
 
 export const dynamic = "force-dynamic";
 
-// ── Rate limiting (in-memory, per-IP + per-target) ──
+// ── Rate limiting (shared in-memory, per-target + per-IP) ──
 // Production should move to Redis for multi-instance; this prevents OTP spam/flood (CRITICAL).
 const OTP_WINDOW_MS = 15 * 60 * 1000; // 15 min
 const OTP_MAX_PER_TARGET = 5; // per email/phone
 const OTP_MAX_PER_IP = 20; // per IP
-const otpRateMap = new Map<string, { count: number; resetAt: number }>();
-
-function checkOtpRateLimit(key: string, limit: number): boolean {
-  const now = Date.now();
-  const entry = otpRateMap.get(key);
-  if (!entry || now > entry.resetAt) {
-    otpRateMap.set(key, { count: 1, resetAt: now + OTP_WINDOW_MS });
-    return true;
-  }
-  if (entry.count >= limit) return false;
-  entry.count += 1;
-  return true;
-}
-
-// Periodic cleanup to avoid unbounded growth
-if (typeof globalThis !== "undefined" && !(globalThis as unknown as { __otpCleanup?: boolean }).__otpCleanup) {
-  (globalThis as unknown as { __otpCleanup: boolean }).__otpCleanup = true;
-  const t = setInterval(() => {
-    const now = Date.now();
-    Array.from(otpRateMap.entries()).forEach(([k, v]) => {
-      if (now > v.resetAt) otpRateMap.delete(k);
-    });
-  }, 60 * 60 * 1000);
-  // Allow process to exit cleanly in test/build
-  if (typeof (t as unknown as { unref?: () => void }).unref === "function") (t as unknown as { unref: () => void }).unref();
-}
 
 const schema = z.object({
   email: z.string().email().optional(),
@@ -82,13 +57,13 @@ export async function POST(req: NextRequest) {
     const phone = channel === "phone" ? target : undefined;
 
     // Rate limiting — per target and per IP
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
+    const ip = clientIp(req);
     const targetKey = `otp:target:${channel}:${target}`;
     const ipKey = `otp:ip:${ip}`;
-    if (!checkOtpRateLimit(targetKey, OTP_MAX_PER_TARGET)) {
+    if (!checkRateLimit(targetKey, OTP_MAX_PER_TARGET, OTP_WINDOW_MS)) {
       return NextResponse.json({ error: "Too many OTP requests. Please try again in 15 minutes." }, { status: 429 });
     }
-    if (!checkOtpRateLimit(ipKey, OTP_MAX_PER_IP)) {
+    if (!checkRateLimit(ipKey, OTP_MAX_PER_IP, OTP_WINDOW_MS)) {
       return NextResponse.json({ error: "Too many requests from this IP. Please try again later." }, { status: 429 });
     }
 

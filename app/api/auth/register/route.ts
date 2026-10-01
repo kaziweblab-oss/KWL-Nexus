@@ -5,6 +5,7 @@ import { connectToDatabase } from "@/lib/db/connect";
 import User from "@/models/User";
 import Otp from "@/models/Otp";
 import { getMemoryOtp, bumpMemoryOtpAttempts } from "@/lib/otp/memory";
+import { checkRateLimit, clientIp } from "@/lib/auth/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,11 @@ export async function POST(req: NextRequest) {
     const email = rawEmail.toLowerCase().trim();
     const phone = normalizePhone(rawPhone);
     const target = channel === "phone" ? phone : email;
+
+    // Prevent mass account creation.
+    if (!checkRateLimit(`register:ip:${clientIp(req)}`, 10, 60 * 60 * 1000)) {
+      return NextResponse.json({ error: "Too many registrations from this network. Please try again later." }, { status: 429 });
+    }
 
     // Verify OTP (DB + memory fallback) — keep OTP for auto-login, don't delete here (signIn will consume)
     let otpValid = false;

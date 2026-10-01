@@ -123,11 +123,22 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // refresh session object daily
   },
   pages: {
     signIn: "/login",
   },
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Allow only same-origin or relative callbacks (defense in depth — the login
+      // page already sanitizes ?callbackUrl=, this guards direct signIn calls).
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      try {
+        if (new URL(url).origin === baseUrl) return url;
+      } catch {}
+      return baseUrl;
+    },
     async jwt({ token, user, account, profile }) {
       // Initial sign-in: user object contains id, name, email, image
       if (user) {
@@ -186,12 +197,23 @@ export const authOptions: NextAuthOptions = {
               (token as any).role = "superadmin";
             }
           } else {
-            // Non-env user: lookup DB role
+            // Non-env user: lookup DB role. OAuth logins (Google/GitHub/Facebook)
+            // never created a User row, which locked them out of payments/downloads
+            // (those look up User by email). Provision on first sight, keyed by
+            // verified provider email so OAuth and OTP share one account.
             try {
               const { connectToDatabase } = await import("@/lib/db/connect");
               await connectToDatabase();
               const User = (await import("@/models/User")).default;
-              const dbUser = await User.findOne({ email }).select("role").lean();
+              let dbUser = await User.findOne({ email });
+              if (!dbUser) {
+                dbUser = await User.create({
+                  email,
+                  name: (token.name as string) || email.split("@")[0],
+                  image: (token.picture as string) ?? undefined,
+                  role: "user",
+                });
+              }
               const role = (dbUser as any)?.role ?? "user";
               (token as any).role = role;
               (token as any).isAdmin = role === "admin" || role === "superadmin";

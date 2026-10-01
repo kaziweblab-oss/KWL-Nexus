@@ -2,6 +2,7 @@
 import Entitlement from "@/models/Entitlement";
 import Subscription from "@/models/Subscription";
 import Plan from "@/models/Plan";
+import User from "@/models/User";
 
 // Canonical product key resolution. Plans carry both appId and appSlug (either may be
 // set); the raw order ref may be a slug or an ObjectId string. Everything downstream
@@ -64,6 +65,14 @@ export async function checkAppAccess(userId: unknown, appRefs: Array<string | un
   const now = new Date();
   const slugs = Array.from(new Set(appRefs.filter((r) => typeof r === "string" && (r as string).trim()).map((r) => String(r).trim().toLowerCase())));
   if (!slugs.length) return { allowed: false, via: null };
+  // Blocked users get nothing — even with a live entitlement. Per-app blocks deny
+  // only the matching product.
+  try {
+    const blocked = (await User.findById(userId).select("isBlocked blockedApps").lean()) as { isBlocked?: boolean; blockedApps?: unknown[] } | null;
+    if (blocked?.isBlocked) return { allowed: false, via: null };
+    const denied = (blocked?.blockedApps ?? []).map((b) => String(b).toLowerCase());
+    if (denied.length && slugs.every((s) => denied.includes(s))) return { allowed: false, via: null };
+  } catch {}
   const ent = await Entitlement.findOne({
     userId,
     appSlug: { $in: slugs },
