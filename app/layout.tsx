@@ -9,6 +9,8 @@ import { Footer } from "@/components/ui/Footer";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  // Use the deployed URL when configured so OG/canonical URLs never fall back to localhost.
+  ...(process.env.NEXTAUTH_URL ? { metadataBase: new URL(process.env.NEXTAUTH_URL) } : {}),
   title: "KWL NEXUS Store",
   description: "Discover the next generation of productivity apps. Where Innovation Meets Connection.",
   manifest: "/manifest.json",

@@ -6,7 +6,7 @@ const OtpSchema = new Schema(
     phone: { type: String, trim: true, index: true, sparse: true },
     channel: { type: String, enum: ["email", "phone"], default: "email", index: true },
     code: { type: String, required: true },
-    expiresAt: { type: Date, required: true, index: { expireAfterSeconds: 0 } },
+    expiresAt: { type: Date, required: true },
     attempts: { type: Number, default: 0 },
   },
   { timestamps: true },

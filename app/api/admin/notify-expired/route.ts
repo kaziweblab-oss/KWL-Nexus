@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/auth";
-import { isAdminEmail } from "@/lib/auth/admin";
+import { isAdmin } from "@/lib/auth/admin";
 import { connectToDatabase } from "@/lib/db/connect";
 import Subscription from "@/models/Subscription";
 import Plan from "@/models/Plan";
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email || !isAdminEmail(session.user.email)) return null;
+  if (!session?.user?.email || !(await isAdmin(session.user.email))) return null;
   try {
     await connectToDatabase();
   } catch {

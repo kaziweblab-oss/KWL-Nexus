@@ -2,7 +2,7 @@
 // This allows dev testing with previewCode even if DB is down.
 // Not for production — use persistent store.
 
-type Entry = { code: string; expiresAt: Date; channel: "email" | "phone" };
+type Entry = { code: string; expiresAt: Date; channel: "email" | "phone"; attempts: number };
 
 const globalStore = globalThis as unknown as { __otpMemory?: Map<string, Entry> };
 
@@ -16,7 +16,18 @@ function keyFor(channel: "email" | "phone", target: string) {
 }
 
 export function setMemoryOtp(channel: "email" | "phone", target: string, code: string, expiresAt: Date) {
-  getStore().set(keyFor(channel, target), { code, expiresAt, channel });
+  getStore().set(keyFor(channel, target), { code, expiresAt, channel, attempts: 0 });
+}
+
+// Increment failed-attempt counter; entry is removed once the limit is reached.
+export function bumpMemoryOtpAttempts(channel: "email" | "phone", target: string, limit = 5): number {
+  const store = getStore();
+  const key = keyFor(channel, target);
+  const entry = store.get(key);
+  if (!entry) return limit;
+  entry.attempts += 1;
+  if (entry.attempts >= limit) store.delete(key);
+  return entry.attempts;
 }
 
 export function getMemoryOtp(channel: "email" | "phone", target: string) {

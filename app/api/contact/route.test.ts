@@ -19,6 +19,8 @@ jest.mock("@/lib/db/connect", () => ({
 
 jest.mock("@/lib/auth/admin", () => ({
   isAdminEmail: jest.fn().mockReturnValue(true),
+  isAdmin: jest.fn().mockResolvedValue(true),
+  isSuperAdmin: jest.fn().mockResolvedValue(false),
 }));
 
 import { GET as getPublicContacts } from "./route";

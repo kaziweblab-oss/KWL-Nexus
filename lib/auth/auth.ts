@@ -49,14 +49,18 @@ export const authOptions: NextAuthOptions = {
           const { connectToDatabase } = await import("@/lib/db/connect");
           await connectToDatabase();
           const Otp = (await import("@/models/Otp")).default;
-          const query: any = channel === "phone" ? { phone: target, code } : { email: target, code };
-          otpRecord = await Otp.findOne(query).sort({ createdAt: -1 });
+          const targetQuery: any = channel === "phone" ? { phone: target } : { email: target };
+          otpRecord = await Otp.findOne(targetQuery).sort({ createdAt: -1 });
           if (otpRecord) {
             if (otpRecord.expiresAt < new Date()) {
               await Otp.deleteOne({ _id: otpRecord._id });
               return null;
             }
             if (otpRecord.attempts >= 5) return null;
+            if (otpRecord.code !== code) {
+              await Otp.updateOne({ _id: otpRecord._id }, { $inc: { attempts: 1 } });
+              return null;
+            }
             await Otp.deleteOne({ _id: otpRecord._id });
             otpValid = true;
           }
@@ -65,7 +69,14 @@ export const authOptions: NextAuthOptions = {
         }
         if (!otpValid) {
           const mem = getMemoryOtp(channel, target!);
-          if (!mem || mem.code !== code) return null;
+          if (!mem || mem.code !== code) {
+            if (mem) {
+              const { bumpMemoryOtpAttempts } = await import("@/lib/otp/memory");
+              bumpMemoryOtpAttempts(channel, target!);
+            }
+            return null;
+          }
+          if ((mem as { attempts?: number }).attempts !== undefined && (mem as { attempts?: number }).attempts! >= 5) return null;
           deleteMemoryOtp(channel, target!);
           otpValid = true;
         }

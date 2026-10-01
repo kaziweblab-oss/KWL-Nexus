@@ -13,9 +13,11 @@ const withPWA = require("next-pwa")({
 			options: { cacheName: "next-data", expiration: { maxEntries: 32, maxAgeSeconds: 60 }, networkTimeoutSeconds: 5 },
 		},
 		{
-			urlPattern: /^\/api\/.*/i,
+			// Public read-only metadata only. Private/personalized APIs (auth, user, payment,
+			// subscription, license, admin, notifications, download) must NEVER be cached.
+			urlPattern: /^\/api\/(public|docs)\/.*/i,
 			handler: "NetworkFirst",
-			options: { cacheName: "apis", expiration: { maxEntries: 16, maxAgeSeconds: 60 }, networkTimeoutSeconds: 5 },
+			options: { cacheName: "public-apis", expiration: { maxEntries: 16, maxAgeSeconds: 300 }, networkTimeoutSeconds: 5 },
 		},
 	],
 });

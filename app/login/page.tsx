@@ -61,7 +61,9 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status } = useSession();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const rawCallback = searchParams.get("callbackUrl");
+  // Allow only same-origin paths — prevents open-redirect via ?callbackUrl=https://evil.
+  const callbackUrl = rawCallback && rawCallback.startsWith("/") && !rawCallback.startsWith("//") ? rawCallback : "/dashboard";
   const mode = searchParams.get("mode");
   const isSignup = mode === "signup";
 

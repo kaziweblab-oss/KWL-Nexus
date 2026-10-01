@@ -105,6 +105,15 @@ export async function POST(req: NextRequest) {
     const resolvedPlanId = plan._id;
     // Normalize TrxID (defense in depth — client already formats per method).
     const transactionId = parsed.data.transactionId.trim().toUpperCase().replace(/\s+/g, "");
+    // Idempotency: a repeated submission of the same provider transaction must NOT
+    // create a duplicate payment row.
+    const duplicate = await Payment.findOne({ paymentMethod: parsed.data.paymentMethod.toLowerCase(), transactionId }).select("_id status").lean() as { _id: unknown; status?: string } | null;
+    if (duplicate) {
+      return NextResponse.json(
+        { error: "This transaction has already been submitted", paymentId: String(duplicate._id), status: duplicate.status },
+        { status: 409 }
+      );
+    }
     const payment = new Payment({
       userId: user._id,
       planId: resolvedPlanId,

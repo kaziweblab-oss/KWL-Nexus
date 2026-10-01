@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/auth";
-import { isAdminEmail } from "@/lib/auth/admin";
+import { isAdmin } from "@/lib/auth/admin";
 import { connectToDatabase } from "@/lib/db/connect";
 import ApiKey from "@/models/ApiKey";
 import { decryptApiKeySecret } from "@/lib/api/auth";
@@ -10,7 +10,7 @@ import { decryptApiKeySecret } from "@/lib/api/auth";
 // Keys generated before reveal support have no keyEnc and return 404 — regenerate those.
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email || !isAdminEmail(session.user.email)) {
+  if (!session?.user?.email || !(await isAdmin(session.user.email))) {
     return NextResponse.json({ error: "Admin access required" }, { status: 403 });
   }
   const id = new URL(request.url).searchParams.get("id");

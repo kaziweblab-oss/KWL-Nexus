@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/auth";
-import { isAdminEmail } from "@/lib/auth/admin";
+import { isAdmin } from "@/lib/auth/admin";
 import { connectToDatabase } from "@/lib/db/connect";
 import User from "@/models/User";
 import Payment from "@/models/Payment";
@@ -17,7 +17,7 @@ const exportSchema = z.object({
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email || !isAdminEmail(session.user.email)) return null;
+  if (!session?.user?.email || !(await isAdmin(session.user.email))) return null;
   await connectToDatabase();
   return true;
 }

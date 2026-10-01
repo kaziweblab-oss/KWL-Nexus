@@ -27,9 +27,12 @@ jest.mock("@/models/PaymentConfig", () => ({
   },
 }));
 const mockSave = jest.fn().mockResolvedValue(undefined);
+const mockPaymentFindOne = jest.fn().mockReturnValue({ select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }) });
 jest.mock("@/models/Payment", () => ({
   __esModule: true,
-  default: jest.fn().mockImplementation((data: any) => ({ ...data, _id: "payment-1", save: mockSave })),
+  default: Object.assign(jest.fn().mockImplementation((data: any) => ({ ...data, _id: "payment-1", save: mockSave })), {
+    findOne: (...args: any[]) => (mockPaymentFindOne as any)(...args),
+  }),
 }));
 
 import { POST } from "./route";
@@ -51,6 +54,21 @@ test("creates a pending payment request", async () => {
     expect.stringContaining("TX123"),
     "payment",
   );
+});
+
+test("rejects a duplicate transaction with 409", async () => {
+  mockPaymentFindOne.mockReturnValueOnce({
+    select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: "payment-9", status: "pending" }) }),
+  });
+  const request = new Request("http://localhost/api/payment/request", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ planId: "507f1f77bcf86cd799439011", appId: "focus-flow", paymentMethod: "bkash", transactionId: "TX123" }),
+  });
+  const response: any = await POST(request as any);
+  expect(response.status).toBe(409);
+  const json = await response.json();
+  expect(json.paymentId).toBe("payment-9");
 });
 
 test("rejects an invalid payment request", async () => {

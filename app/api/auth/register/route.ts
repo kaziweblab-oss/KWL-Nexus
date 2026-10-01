@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { connectToDatabase } from "@/lib/db/connect";
 import User from "@/models/User";
 import Otp from "@/models/Otp";
-import { getMemoryOtp } from "@/lib/otp/memory";
+import { getMemoryOtp, bumpMemoryOtpAttempts } from "@/lib/otp/memory";
 
 export const dynamic = "force-dynamic";
 
@@ -43,14 +43,18 @@ export async function POST(req: NextRequest) {
     let usedMemory = false;
     try {
       await connectToDatabase();
-      const query = channel === "phone" ? { phone: target, code } : { email: target, code };
-      const rec = await Otp.findOne(query).sort({ createdAt: -1 });
+      const targetQuery = channel === "phone" ? { phone: target } : { email: target };
+      const rec = await Otp.findOne(targetQuery).sort({ createdAt: -1 });
       if (rec) {
         if (rec.expiresAt < new Date()) {
           await Otp.deleteOne({ _id: rec._id });
           return NextResponse.json({ error: "Code expired" }, { status: 400 });
         }
         if (rec.attempts >= 5) return NextResponse.json({ error: "Too many attempts" }, { status: 429 });
+        if (rec.code !== code) {
+          await Otp.updateOne({ _id: rec._id }, { $inc: { attempts: 1 } });
+          return NextResponse.json({ error: "Invalid or expired code" }, { status: 400 });
+        }
         otpValid = true;
         // Do NOT delete here — keep for auto sign-in (signIn will consume)
       }
@@ -63,6 +67,9 @@ export async function POST(req: NextRequest) {
         otpValid = true;
         usedMemory = true;
         // Keep memory OTP for auto sign-in as well
+      } else if (mem) {
+        const attempts = bumpMemoryOtpAttempts(channel, target);
+        if (attempts >= 5) return NextResponse.json({ error: "Too many attempts" }, { status: 429 });
       }
     }
     if (!otpValid) return NextResponse.json({ error: "Invalid or expired code" }, { status: 400 });

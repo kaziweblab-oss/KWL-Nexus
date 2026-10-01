@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth/auth";
-import { isAdminEmail } from "@/lib/auth/admin";
+import { isAdmin } from "@/lib/auth/admin";
 import { authenticateApiRequest, assertKeyScope, touchKeyApp } from "@/lib/api/auth";
 import { connectToDatabase } from "@/lib/db/connect";
 import App from "@/models/App";
@@ -14,7 +14,7 @@ const tutorialSchema = z.object({ videoUrl: z.string().url().max(2000).optional(
 // Admins (session) or the app itself (x-api-key) can publish/replace tutorial content.
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
-  const viaAdmin = Boolean(session?.user?.email && isAdminEmail(session.user.email));
+  const viaAdmin = Boolean(session?.user?.email && (await isAdmin(session.user.email)));
   let keyId: string | undefined;
   if (!viaAdmin) {
     const auth = await authenticateApiRequest(request);

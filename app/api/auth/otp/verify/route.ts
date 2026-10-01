@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { connectToDatabase } from "@/lib/db/connect";
 import Otp from "@/models/Otp";
-import { getMemoryOtp } from "@/lib/otp/memory";
+import { getMemoryOtp, bumpMemoryOtpAttempts } from "@/lib/otp/memory";
 
 export const dynamic = "force-dynamic";
 
@@ -37,17 +37,22 @@ export async function POST(req: NextRequest) {
     const target = channel === "phone" ? rawPhone! : rawEmail!;
     const code = parsed.data.code.trim();
 
-    // Try DB first, fallback to memory
+    // Try DB first, fallback to memory. Failed attempts are counted so codes
+    // cannot be brute-forced (limit 5 per code).
     try {
       await connectToDatabase();
-      const query = channel === "phone" ? { phone: target, code } : { email: target, code };
-      const record = await Otp.findOne(query).sort({ createdAt: -1 });
+      const targetQuery = channel === "phone" ? { phone: target } : { email: target };
+      const record = await Otp.findOne(targetQuery).sort({ createdAt: -1 });
       if (record) {
         if (record.expiresAt < new Date()) {
           await Otp.deleteOne({ _id: record._id });
           return NextResponse.json({ error: "Code expired" }, { status: 400 });
         }
         if (record.attempts >= 5) return NextResponse.json({ error: "Too many attempts" }, { status: 429 });
+        if (record.code !== code) {
+          await Otp.updateOne({ _id: record._id }, { $inc: { attempts: 1 } });
+          return NextResponse.json({ error: "Invalid code" }, { status: 400 });
+        }
         return NextResponse.json({ success: true, message: "Code verified" }, { status: 200 });
       }
     } catch {
@@ -56,7 +61,11 @@ export async function POST(req: NextRequest) {
 
     const mem = getMemoryOtp(channel, target);
     if (!mem) return NextResponse.json({ error: "Invalid code" }, { status: 400 });
-    if (mem.code !== code) return NextResponse.json({ error: "Invalid code" }, { status: 400 });
+    if (mem.code !== code) {
+      const attempts = bumpMemoryOtpAttempts(channel, target);
+      if (attempts >= 5) return NextResponse.json({ error: "Too many attempts" }, { status: 429 });
+      return NextResponse.json({ error: "Invalid code" }, { status: 400 });
+    }
 
     return NextResponse.json({ success: true, message: "Code verified" }, { status: 200 });
   } catch (error) {

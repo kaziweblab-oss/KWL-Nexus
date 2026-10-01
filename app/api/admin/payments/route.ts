@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import mongoose from "mongoose";
 import { authOptions } from "@/lib/auth/auth";
-import { isAdminEmail } from "@/lib/auth/admin";
+import { isAdmin } from "@/lib/auth/admin";
 import { connectToDatabase } from "@/lib/db/connect";
 import Payment from "@/models/Payment";
 import Subscription from "@/models/Subscription";
@@ -11,7 +12,7 @@ import Notification from "@/models/Notification";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email || !isAdminEmail(session.user.email)) return null;
+  if (!session?.user?.email || !(await isAdmin(session.user.email))) return null;
   await connectToDatabase();
   const User = (await import("@/models/User")).default;
   return User.findOne({ email: session.user.email });
@@ -30,8 +31,15 @@ export async function PATCH(request: Request) {
   if (!admin) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
   const body = await request.json() as { paymentId?: string; action?: "verify" | "reject"; deadline?: string; notes?: string };
   if (!body.paymentId || !body.action) return NextResponse.json({ error: "paymentId and action are required" }, { status: 400 });
+  if (!mongoose.Types.ObjectId.isValid(body.paymentId)) return NextResponse.json({ error: "Invalid paymentId" }, { status: 400 });
   const payment = await Payment.findById(body.paymentId);
   if (!payment) return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+  // Idempotency: re-verifying an already-succeeded payment must NOT create a
+  // duplicate subscription. Rejecting a succeeded payment requires the refund flow.
+  if (payment.status === "succeeded") {
+    if (body.action === "verify") return NextResponse.json({ data: { id: payment.id, status: payment.status, subscriptionId: payment.subscriptionId } });
+    return NextResponse.json({ error: "Payment already succeeded. Use refund instead of reject." }, { status: 409 });
+  }
   if (body.action === "reject") {
     payment.status = "failed";
     payment.verifiedBy = admin._id;

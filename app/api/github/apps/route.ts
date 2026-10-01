@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { isAdminEmail } from "@/lib/auth/admin";
+import { isAdmin } from "@/lib/auth/admin";
 import { connectToDatabase } from "@/lib/db/connect";
 import App from "@/models/App";
 
@@ -8,7 +8,7 @@ import App from "@/models/App";
 export async function POST(request: Request) {
   const token = await getToken({ req: request as never, secret: process.env.NEXTAUTH_SECRET });
   const email = typeof token?.email === "string" ? token.email : null;
-  if (!email || !isAdminEmail(email)) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+  if (!email || !(await isAdmin(email))) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
   const body = await request.json() as { owner?: string; repo?: string; name?: string; description?: string; url?: string; config?: { name?: string; description?: string; category?: string; iconUrl?: string; websiteUrl?: string } | null };
   // Professional: support both `repo` and `name` as repo identifier, and fallback to SystemConfig default owner
   let owner = body.owner?.trim();

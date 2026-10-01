@@ -10,7 +10,22 @@ function isValidSignature(payload: string, signature: string | null) {
   const secret = process.env.GITHUB_WEBHOOK_SECRET;
   if (!secret || !signature) return false;
   const expected = `sha256=${crypto.createHmac("sha256", secret).update(payload).digest("hex")}`;
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+  const a = Buffer.from(expected);
+  const b = Buffer.from(signature);
+  // timingSafeEqual throws on length mismatch — fail closed with 401 instead of 500.
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
+
+function isAllowedRepo(owner: string, repo: string) {
+  const raw = process.env.GITHUB_WEBHOOK_ALLOWED_REPOS ?? "";
+  const allowed = raw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  if (!allowed.length) return true; // allowlist not configured — accept any repo with valid signature
+  return allowed.includes(`${owner.toLowerCase()}/${repo.toLowerCase()}`);
+}
+
+function isValidTag(tag: string) {
+  return typeof tag === "string" && tag.length >= 1 && tag.length <= 100 && /^[A-Za-z0-9._\-/]+$/.test(tag);
 }
 
 // Store published GitHub releases and classify installable assets for each platform.
@@ -21,7 +36,12 @@ export async function POST(request: Request) {
   if (event !== "release") return NextResponse.json({ received: true, ignored: true });
   const data = JSON.parse(payload) as GithubReleasePayload;
   if (!data.release || !data.repository || !["published", "created"].includes(data.action)) return NextResponse.json({ received: true, ignored: true });
+  const owner = data.repository.owner.login;
+  const repo = data.repository.name;
+  const tag = data.release.tag_name;
+  if (!isValidTag(tag)) return NextResponse.json({ received: true, ignored: true });
+  if (!isAllowedRepo(owner, repo)) return NextResponse.json({ received: true, ignored: true });
   await connectToDatabase();
-  await Release.findOneAndUpdate({ githubOwner: data.repository.owner.login, githubRepo: data.repository.name, tagName: data.release.tag_name }, { githubOwner: data.repository.owner.login, githubRepo: data.repository.name, tagName: data.release.tag_name, name: data.release.name, body: data.release.body, publishedAt: data.release.published_at, assets: data.release.assets.filter((asset) => ["Android", "Windows", "Linux"].includes(detectPlatform(asset.name))).map((asset) => ({ name: asset.name, url: asset.browser_download_url, contentType: asset.content_type, size: asset.size, platform: detectPlatform(asset.name) })) }, { upsert: true, new: true });
-  return NextResponse.json({ received: true, tag: data.release.tag_name });
+  await Release.findOneAndUpdate({ githubOwner: owner, githubRepo: repo, tagName: tag }, { githubOwner: owner, githubRepo: repo, tagName: tag, name: data.release.name, body: data.release.body, publishedAt: data.release.published_at, assets: data.release.assets.filter((asset) => ["Android", "Windows", "Linux"].includes(detectPlatform(asset.name))).map((asset) => ({ name: asset.name, url: asset.browser_download_url, contentType: asset.content_type, size: asset.size, platform: detectPlatform(asset.name) })) }, { upsert: true, new: true });
+  return NextResponse.json({ received: true, tag });
 }
