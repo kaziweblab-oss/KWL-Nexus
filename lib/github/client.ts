@@ -89,6 +89,15 @@ export function detectPlatform(filename: string) {
   return "Other";
 }
 
+export function detectArch(filename: string) {
+  const lower = filename.toLowerCase();
+  if (lower.includes("arm64") || lower.includes("aarch64")) return "arm64";
+  if (lower.includes("x64") || lower.includes("amd64") || lower.includes("x86_64")) return "x64";
+  if (lower.includes("universal")) return "universal";
+  if (lower.includes("-arm.") || lower.includes("_arm.") || lower.includes("armv7")) return "arm";
+  return null;
+}
+
 // All configured tokens (unique, in priority order). A stale/invalid token in one
 // slot must not shadow a working token in another — callers retry on 401.
 export async function getGithubTokenCandidates(oauthToken?: string | null): Promise<string[]> {

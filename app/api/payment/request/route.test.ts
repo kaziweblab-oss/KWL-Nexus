@@ -28,6 +28,7 @@ jest.mock("@/models/PaymentConfig", () => ({
 }));
 const mockSave = jest.fn().mockResolvedValue(undefined);
 const mockPaymentFindOne = jest.fn().mockReturnValue({ select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }) });
+const mockOrderCreate = jest.fn().mockResolvedValue({ _id: "order-1" });
 jest.mock("@/models/Payment", () => ({
   __esModule: true,
   default: Object.assign(jest.fn().mockImplementation((data: any) => ({ ...data, _id: "payment-1", save: mockSave })), {
@@ -37,6 +38,11 @@ jest.mock("@/models/Payment", () => ({
 
 import { POST } from "./route";
 import { notifyAdmins } from "@/lib/notifications/admin";
+
+jest.mock("@/models/Order", () => ({
+  __esModule: true,
+  default: { create: (...args: any[]) => (mockOrderCreate as any)(...args) },
+}));
 
 test("creates a pending payment request", async () => {
   const request = new Request("http://localhost/api/payment/request", {
@@ -49,6 +55,8 @@ test("creates a pending payment request", async () => {
   const json = await response.json();
   expect(json.success).toBe(true);
   expect(json.paymentId).toBeDefined();
+  expect(json.orderId).toBe("order-1");
+  expect(mockOrderCreate).toHaveBeenCalledWith(expect.objectContaining({ status: "pending", appId: "focus-flow" }));
   expect(notifyAdmins).toHaveBeenCalledWith(
     "New payment request",
     expect.stringContaining("TX123"),

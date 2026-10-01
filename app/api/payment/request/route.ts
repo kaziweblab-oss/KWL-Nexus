@@ -128,6 +128,24 @@ export async function POST(req: NextRequest) {
     });
 
     await payment.save();
+    // Order is the purchase record (Payment is the money record). Best-effort here —
+    // the payment row stays authoritative and the order backfills on admin verify.
+    let orderId: unknown = null;
+    try {
+      const Order = (await import("@/models/Order")).default;
+      const order = await Order.create({
+        userId: user._id,
+        appId: parsed.data.appId,
+        planId: resolvedPlanId,
+        paymentId: payment._id,
+        amount: plan.price,
+        currency: plan.currency || "BDT",
+        status: "pending",
+      });
+      orderId = order._id;
+    } catch (orderErr) {
+      console.warn("Order create failed (backfills on verify):", (orderErr as Error)?.message);
+    }
     await notifyAdmins(
       "New payment request",
       `${user.email} submitted a ${parsed.data.paymentMethod} payment request for ${plan.name} (${parsed.data.appId}). Transaction ID: ${transactionId}.`,
@@ -151,6 +169,7 @@ export async function POST(req: NextRequest) {
         success: true,
         message: "Payment request created successfully",
         paymentId: payment._id,
+        orderId: orderId ? String(orderId) : null,
         appId: parsed.data.appId,
       },
       { status: 201 }

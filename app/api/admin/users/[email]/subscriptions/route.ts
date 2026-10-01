@@ -89,6 +89,20 @@ export async function POST(request: Request, { params }: { params: { email: stri
       startedAt: now,
       endsAt: endDate,
     });
+    // Manual grants also create the entitlement so downloads work uniformly.
+    try {
+      const { grantEntitlement } = await import("@/lib/entitlements/grants");
+      await grantEntitlement({
+        userId: user._id,
+        plan: plan as { appSlug?: unknown; appId?: unknown; interval?: unknown },
+        planId: plan._id,
+        rawAppRef: body.appId,
+        subscriptionId: sub._id,
+        endsAt: (sub as { endsAt?: Date; endDate?: Date }).endsAt ?? (sub as { endDate?: Date }).endDate ?? null,
+      });
+    } catch (entErr) {
+      console.warn("Entitlement grant failed on manual subscription:", (entErr as Error)?.message);
+    }
     return NextResponse.json({ data: sub }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "DB error" }, { status: 500 });

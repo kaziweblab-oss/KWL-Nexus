@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/auth";
 import { connectToDatabase } from "@/lib/db/connect";
-import Subscription from "@/models/Subscription";
 import App from "@/models/App";
 import User from "@/models/User";
 import { API_ERRORS } from "@/lib/api/errors";
@@ -71,28 +70,14 @@ export async function GET(
       return NextResponse.json({ error: API_ERRORS.APP_NOT_FOUND }, { status: 404 });
     }
 
-    // Check subscription - allow active subscription check with ObjectId or string
-    const appObjectId = mongoose.Types.ObjectId.isValid(app._id) ? app._id : undefined;
-    const subscriptionQuery: any = {
-      userId: user._id,
-      status: "active",
-      endDate: { $gt: new Date() },
-    };
-    // Try multiple appId formats to cover slug vs ObjectId inconsistency
-    const orConditions: any[] = [];
-    if (appObjectId) orConditions.push({ appId: appObjectId });
-    orConditions.push({ appId: appId });
-    orConditions.push({ appId: app._id });
-    if (app.slug) orConditions.push({ appId: app.slug });
-
-    // If subscription collection is empty for dummy apps in dev, allow access when user is logged in
-    // but still attempt to find real subscription first
-    let subscription: any = null;
-    if (orConditions.length === 1) {
-      subscription = await Subscription.findOne({ ...subscriptionQuery, ...orConditions[0] }).lean();
-    } else {
-      subscription = await Subscription.findOne({ ...subscriptionQuery, $or: orConditions }).lean();
-    }
+    // Unified access check: Entitlement docs first, then legacy active
+    // Subscriptions joined through their Plan (pre-entitlement grants).
+    // NOTE: Subscription rows carry no appId — the old appId $or query could never
+    // match, so protected downloads always 403'd for DB apps. Fixed via Entitlement.
+    const { checkAppAccess } = await import("@/lib/entitlements/grants");
+    const access = await checkAppAccess(user._id, [appId, app._id, (app as { slug?: unknown }).slug]);
+    // Truthy when access is granted (keeps the dummy-catalog bypass below working).
+    let subscription: { status: string; via?: string; endDate?: Date } | null = access.allowed ? { status: "active", via: access.via ?? undefined } : null;
 
     // In production, require subscription. For dummy catalog without DB records, if no subscription found
     // we still check if any subscription exists for user; if none, return error

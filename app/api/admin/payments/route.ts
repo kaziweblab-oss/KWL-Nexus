@@ -46,6 +46,11 @@ export async function PATCH(request: Request) {
     payment.verifiedAt = new Date();
     payment.notes = body.notes;
     await payment.save();
+    // Keep the order lifecycle in sync (best-effort — payment row is authoritative).
+    try {
+      const Order = (await import("@/models/Order")).default;
+      await Order.findOneAndUpdate({ paymentId: payment._id }, { $set: { status: "failed" } });
+    } catch {}
     // notify user about rejection with reason
     try {
       const User = (await import("@/models/User")).default;
@@ -70,6 +75,34 @@ export async function PATCH(request: Request) {
   if (endDate && plan?.interval === "month") endDate.setMonth(endDate.getMonth() + 1);
   if (endDate && plan?.interval === "year") endDate.setFullYear(endDate.getFullYear() + 1);
   const subscription = await Subscription.create({ userId: payment.userId, planId: payment.planId, status: "active", startDate, endDate, startedAt: startDate, endsAt: endDate });
+  // Order lifecycle: pending → paid → fulfilled. Backfill when the payment predates
+  // Phase 2 (no order row yet).
+  const Order = (await import("@/models/Order")).default;
+  let order = await Order.findOne({ paymentId: payment._id });
+  if (!order) {
+    order = await Order.create({ userId: payment.userId, appId: payment.appId, planId: payment.planId, paymentId: payment._id, amount: payment.amount, currency: payment.currency, status: "paid" });
+  } else if (order.status === "pending" || order.status === "created") {
+    order.status = "paid";
+    await order.save();
+  }
+  // Successful payment creates/updates the entitlement (access record). The legacy
+  // subscription row above keeps old download checks working as a fallback.
+  try {
+    const { grantEntitlement } = await import("@/lib/entitlements/grants");
+    await grantEntitlement({
+      userId: payment.userId,
+      plan: plan as { appSlug?: unknown; appId?: unknown; interval?: unknown } | null,
+      planId: payment.planId,
+      rawAppRef: payment.appId,
+      orderId: order._id,
+      subscriptionId: subscription._id,
+      endsAt: (subscription as { endsAt?: Date; endDate?: Date }).endsAt ?? (subscription as { endDate?: Date }).endDate ?? null,
+    });
+    order.status = "fulfilled";
+    await order.save();
+  } catch (entErr) {
+    console.warn("Entitlement grant failed (order stays paid, retry on re-verify):", (entErr as Error)?.message);
+  }
   payment.status = "succeeded";
   payment.subscriptionId = subscription._id;
   payment.verifiedBy = admin._id;
@@ -94,5 +127,5 @@ export async function PATCH(request: Request) {
       });
     }
   } catch {}
-  return NextResponse.json({ data: { id: payment.id, status: payment.status, subscriptionId: subscription.id } });
+  return NextResponse.json({ data: { id: payment.id, status: payment.status, subscriptionId: subscription.id, orderId: order?._id ? String(order._id) : null } });
 }

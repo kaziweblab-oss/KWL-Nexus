@@ -10,7 +10,16 @@ const ReleaseSchema = new Schema(
     name: String,
     body: String,
     publishedAt: Date,
-    assets: [{ name: String, url: String, contentType: String, size: Number, platform: String }],
+    assets: [
+      {
+        name: String,
+        url: String,
+        contentType: String,
+        size: Number,
+        platform: { type: String, enum: ["Android", "Windows", "Linux", "Other"], default: "Other" },
+        arch: { type: String, enum: ["x64", "arm64", "arm", "universal"], default: null },
+      },
+    ],
   },
   { timestamps: true },
 );

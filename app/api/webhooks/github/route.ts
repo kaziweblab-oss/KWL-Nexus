@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db/connect";
 import Release from "@/models/Release";
-import { detectPlatform } from "@/lib/github/client";
+import { detectPlatform, detectArch } from "@/lib/github/client";
 
 type GithubReleasePayload = { action: string; release?: { tag_name: string; name: string | null; body: string | null; published_at: string | null; assets: { name: string; browser_download_url: string; content_type: string; size: number }[]; target_commitish: string }; repository?: { name: string; owner: { login: string } } };
 
@@ -42,6 +42,6 @@ export async function POST(request: Request) {
   if (!isValidTag(tag)) return NextResponse.json({ received: true, ignored: true });
   if (!isAllowedRepo(owner, repo)) return NextResponse.json({ received: true, ignored: true });
   await connectToDatabase();
-  await Release.findOneAndUpdate({ githubOwner: owner, githubRepo: repo, tagName: tag }, { githubOwner: owner, githubRepo: repo, tagName: tag, name: data.release.name, body: data.release.body, publishedAt: data.release.published_at, assets: data.release.assets.filter((asset) => ["Android", "Windows", "Linux"].includes(detectPlatform(asset.name))).map((asset) => ({ name: asset.name, url: asset.browser_download_url, contentType: asset.content_type, size: asset.size, platform: detectPlatform(asset.name) })) }, { upsert: true, new: true });
+  await Release.findOneAndUpdate({ githubOwner: owner, githubRepo: repo, tagName: tag }, { githubOwner: owner, githubRepo: repo, tagName: tag, name: data.release.name, body: data.release.body, publishedAt: data.release.published_at, assets: data.release.assets.filter((asset) => ["Android", "Windows", "Linux"].includes(detectPlatform(asset.name))).map((asset) => ({ name: asset.name, url: asset.browser_download_url, contentType: asset.content_type, size: asset.size, platform: detectPlatform(asset.name), arch: detectArch(asset.name) })) }, { upsert: true, new: true });
   return NextResponse.json({ received: true, tag });
 }
