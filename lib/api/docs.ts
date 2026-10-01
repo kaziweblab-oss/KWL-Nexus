@@ -21,6 +21,10 @@ export const apiEndpoints = [
   { method: "GET", path: "/api/update-guidelines", description: "Get latest update guidelines." },
   { method: "GET", path: "/api/health", description: "Health check — keep-alive (no auth)." },
   { method: "GET", path: "/api/ping", description: "Ping — keep-alive alias (no auth)." },
+  { method: "GET", path: "/api/v1/apps", description: "V1 public catalog (published apps, paginated)." },
+  { method: "GET", path: "/api/v1/apps/[slug]", description: "V1 public app metadata by slug." },
+  { method: "GET", path: "/api/v1/apps/[slug]/latest", description: "V1 update manifest (?platform=&arch=&current=)." },
+  { method: "GET", path: "/api/v1/apps/[slug]/entitlement", description: "V1 license check (session or scoped x-api-key)." },
 ];
 
 export const openApiDocument = {

@@ -16,6 +16,9 @@ const ApiKeySchema = new Schema(
     expiresAt: Date,
     isRevoked: { type: Boolean, default: false },
     rateLimitPerHour: { type: Number, default: 1000, min: 1 },
+    // Granular scopes. Absent/empty = all scopes (backward compatible with old keys).
+    // Known: app:read, release:read, entitlement:read, update:read.
+    scopes: { type: [String], default: undefined },
   },
   { timestamps: true },
 );

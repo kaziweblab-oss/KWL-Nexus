@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth/auth";
 import { isAdmin } from "@/lib/auth/admin";
 import { connectToDatabase } from "@/lib/db/connect";
 import ApiKey from "@/models/ApiKey";
-import { createApiKey, hashApiKey, encryptApiKeySecret } from "@/lib/api/auth";
+import { createApiKey, hashApiKey, encryptApiKeySecret, API_KEY_SCOPES } from "@/lib/api/auth";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -18,9 +18,17 @@ async function requireAdmin() {
 export async function POST(request: Request) {
   const user = await requireAdmin();
   if (!user) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-  const body = await request.json().catch(() => ({})) as { name?: string; appId?: string };
+  const body = await request.json().catch(() => ({})) as { name?: string; appId?: string; scopes?: unknown };
   const name = body.name?.trim();
   if (!name) return NextResponse.json({ error: "Key name is required" }, { status: 400 });
+  // Optional granular scopes (default = full access, backward compatible).
+  let scopes: string[] | undefined;
+  if (body.scopes !== undefined) {
+    if (!Array.isArray(body.scopes) || !(body.scopes as unknown[]).every((s) => typeof s === "string" && (API_KEY_SCOPES as readonly string[]).includes(s))) {
+      return NextResponse.json({ error: `scopes must be a subset of: ${API_KEY_SCOPES.join(", ")}` }, { status: 400 });
+    }
+    scopes = (body.scopes as string[]).length ? (body.scopes as string[]) : undefined;
+  }
   // Optional one-app scope (slug). Empty = all apps (admin key).
   const appScope = body.appId?.trim() || null;
   if (appScope) {
@@ -29,8 +37,8 @@ export async function POST(request: Request) {
     if (!exists) return NextResponse.json({ error: "App not found for scope" }, { status: 400 });
   }
   const plainKey = createApiKey();
-  const record = await ApiKey.create({ userId: user._id, name, keyHash: hashApiKey(plainKey), keyEnc: encryptApiKeySecret(plainKey), appId: appScope, rateLimitPerHour: 1000 });
-  return NextResponse.json({ data: { id: record.id, name: record.name, appId: appScope, key: plainKey, rateLimitPerHour: record.rateLimitPerHour } }, { status: 201 });
+  const record = await ApiKey.create({ userId: user._id, name, keyHash: hashApiKey(plainKey), keyEnc: encryptApiKeySecret(plainKey), appId: appScope, scopes, rateLimitPerHour: 1000 });
+  return NextResponse.json({ data: { id: record.id, name: record.name, appId: appScope, scopes: scopes ?? null, key: plainKey, rateLimitPerHour: record.rateLimitPerHour } }, { status: 201 });
 }
 
 export async function GET() {

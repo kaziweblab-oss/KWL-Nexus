@@ -69,6 +69,17 @@ export async function assertKeyScope(
   return { error: "This API key is scoped to another app", status: 403 };
 }
 
+export const API_KEY_SCOPES = ["app:read", "release:read", "entitlement:read", "update:read"] as const;
+
+// Granular scope check. Sessions always pass (user context); legacy keys without a
+// scopes array keep full access so old integrations never break.
+export function hasKeyScope(auth: { apiKeyId?: string; scopes?: string[] | null }, scope: string): boolean {
+  if (!auth.apiKeyId) return true;
+  const list = auth.scopes;
+  if (!list || !list.length) return true;
+  return list.includes(scope);
+}
+
 export async function authenticateApiRequest(request: Request) {
   const raw = request.headers.get("x-api-key") ?? request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (raw) {
@@ -81,7 +92,12 @@ export async function authenticateApiRequest(request: Request) {
     requestWindows.set(apiKey.id, nextWindow);
     if (nextWindow.count > (apiKey.rateLimitPerHour ?? 1000)) return { error: "Rate limit exceeded", status: 429 as const };
     await ApiKey.updateOne({ _id: apiKey._id }, { lastUsedAt: new Date() });
-    return { userId: apiKey.userId.toString(), apiKeyId: apiKey.id, appScope: (apiKey.appId as string | null) ?? null };
+    return {
+      userId: apiKey.userId.toString(),
+      apiKeyId: apiKey.id,
+      appScope: (apiKey.appId as string | null) ?? null,
+      scopes: (Array.isArray(apiKey.scopes) && apiKey.scopes.length ? apiKey.scopes : null) as string[] | null,
+    };
   }
   const session = await getServerSession(authOptions);
   if (session?.user?.email) {

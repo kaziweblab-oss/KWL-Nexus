@@ -20,6 +20,7 @@ const ReleaseSchema = new Schema(
         size: Number,
         platform: { type: String, enum: ["Android", "Windows", "Linux", "Other"], default: "Other" },
         arch: { type: String, enum: ["x64", "arm64", "arm", "universal"], default: null },
+        checksumSha256: { type: String, default: null },
       },
     ],
   },
