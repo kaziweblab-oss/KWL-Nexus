@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Download, Loader2, Package, RefreshCw } from "lucide-react";
+import { Check, Copy, Download, FileArchive, FileJson, FileSignature, FileText, Loader2, Package, RefreshCw } from "lucide-react";
 
 type Asset = { name: string; size: number; downloads: number; url: string };
 type Release = { id: number; tag: string; name: string; body: string | null; draft: boolean; prerelease: boolean; publishedAt: string | null; url: string; assets: Asset[] };
@@ -26,6 +26,24 @@ export function AppReleaseManager({ owner, repo, appSlug, currentVersion, onAppl
   const [error, setError] = useState("");
   const [applying, setApplying] = useState<number | null>(null);
   const [msg, setMsg] = useState("");
+  const [copied, setCopied] = useState("");
+
+  function assetIcon(name: string) {
+    const n = name.toLowerCase();
+    if (n.endsWith(".sig")) return { Icon: FileSignature, cls: "text-slate-400" };
+    if (n.endsWith(".json")) return { Icon: FileJson, cls: "text-amber-500" };
+    if (n.endsWith(".apk") || n.endsWith(".exe") || n.endsWith(".msi") || n.endsWith(".deb") || n.endsWith(".dmg") || n.endsWith(".appimage")) return { Icon: Download, cls: "text-emerald-500" };
+    if (n.endsWith(".zip") || n.endsWith(".tar.gz") || n.endsWith(".tgz")) return { Icon: FileArchive, cls: "text-primary" };
+    return { Icon: FileText, cls: "text-ink/40 dark:text-white/40" };
+  }
+
+  async function copyUrl(url: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(url);
+      setTimeout(() => setCopied(""), 2000);
+    } catch {}
+  }
 
   async function load() {
     if (!owner || !repo) { setLoading(false); return; }
@@ -114,13 +132,38 @@ export function AppReleaseManager({ owner, repo, appSlug, currentVersion, onAppl
             </div>
             <div className="mt-3 grid gap-1.5 text-xs">
               {(Object.entries(urls) as [string, string][]).map(([platform, url]) => (
-                <p key={platform} className="flex items-center gap-1.5 text-ink/60 dark:text-white/60">
-                  <Download size={11} className={url ? "text-emerald-500" : "text-ink/25"} />
-                  <span className="w-16 font-bold capitalize">{platform}</span>
-                  <span className="truncate font-mono text-[11px]">{url || "— no asset"}</span>
-                </p>
+                <div key={platform} className="flex min-w-0 items-center gap-1.5 rounded-lg bg-paper px-2.5 py-2 dark:bg-white/[0.04]">
+                  <Download size={11} className={`shrink-0 ${url ? "text-emerald-500" : "text-ink/25"}`} />
+                  <span className="w-16 shrink-0 font-bold capitalize text-ink/70 dark:text-white/70">{platform}</span>
+                  {url ? (
+                    <>
+                      <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-ink/60 dark:text-white/60">{url}</span>
+                      <button onClick={() => void copyUrl(url)} title="Copy URL" className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-ink/40 hover:bg-ink/5 hover:text-primary dark:text-white/40">
+                        {copied === url ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-[11px] text-ink/35 dark:text-white/30">— no asset</span>
+                  )}
+                </div>
               ))}
-              <p className="text-[11px] text-ink/40 dark:text-white/30">{rel.assets.length} asset(s): {rel.assets.map((a) => `${a.name} (${fmtSize(a.size)})`).join(", ") || "none"}</p>
+              <details className="rounded-lg bg-paper px-2.5 py-2 dark:bg-white/[0.04]">
+                <summary className="cursor-pointer text-[11px] font-semibold text-ink/50 hover:text-primary dark:text-white/50">
+                  All {rel.assets.length} asset(s)
+                </summary>
+                <ul className="mt-2 grid max-h-40 gap-1 overflow-y-auto pr-1">
+                  {rel.assets.map((a) => {
+                    const { Icon, cls } = assetIcon(a.name);
+                    return (
+                      <li key={a.name} className="flex min-w-0 items-center gap-1.5 text-[11px] text-ink/60 dark:text-white/60">
+                        <Icon size={12} className={`shrink-0 ${cls}`} />
+                        <span className="min-w-0 flex-1 truncate font-mono">{a.name}</span>
+                        <span className="shrink-0 rounded-full bg-ink/5 px-1.5 py-0.5 font-semibold dark:bg-white/10">{fmtSize(a.size)}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </details>
             </div>
           </article>
         );

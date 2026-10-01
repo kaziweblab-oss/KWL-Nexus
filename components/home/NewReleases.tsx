@@ -5,7 +5,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apps, type AppRecord } from "@/lib/data/apps";
 import { useLanguage } from "@/components/shared/LanguageProvider";
-type NewReleaseApp = AppRecord & { newReleaseImageUrl?: string | null; latestVersion?: string };
+type NewReleaseApp = AppRecord & { newReleaseImageUrl?: string | null; latestVersion?: string; iconUrl?: string | null; downloadCount?: number };
 
 // Dynamic: shows latest apps (DB flagged isNewRelease + newest), admin can set image via /admin
 export function NewReleases() {
@@ -21,7 +21,7 @@ export function NewReleases() {
         if (res.ok) {
           const data = await res.json();
           if (active && Array.isArray(data.data) && data.data.length) {
-            const mapped: NewReleaseApp[] = data.data.map((d: { id?: string; slug?: string; name: string; category: string; description?: string; icon?: string; accent?: string; downloads?: string; rating?: string; newReleaseImageUrl?: string; latestVersion?: string }) => ({
+            const mapped: NewReleaseApp[] = data.data.map((d: { id?: string; slug?: string; name: string; category: string; description?: string; icon?: string; iconUrl?: string; accent?: string; downloads?: string; downloadCount?: number; rating?: string; newReleaseImageUrl?: string; latestVersion?: string }) => ({
               id: d.slug || d.id || d.name.toLowerCase().replace(/\s+/g, "-"),
               name: d.name,
               category: d.category || "Development",
@@ -29,7 +29,8 @@ export function NewReleases() {
               longDescription: d.description || "",
               accent: d.accent || "#6C63FF",
               icon: d.icon || "✦",
-              downloads: d.downloads || "—",
+              iconUrl: d.iconUrl || null,
+              downloads: d.downloads || String(d.downloadCount ?? 0),
               rating: d.rating || "4.9",
               platforms: ["Android", "Windows", "Linux"],
               plans: [],
@@ -78,6 +79,9 @@ export function NewReleases() {
           <Link key={app.id} href={`/apps/${app.id}`} className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-white/5">
             {app.newReleaseImageUrl ? (
               <img src={app.newReleaseImageUrl} alt={app.name} className="h-10 w-10 shrink-0 rounded-xl object-cover" />
+            ) : app.iconUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={app.iconUrl} alt={app.name} className="h-10 w-10 shrink-0 rounded-xl object-cover" />
             ) : (
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-white text-sm font-bold" style={{ backgroundColor: app.accent }}>{app.icon}</span>
             )}
@@ -114,7 +118,7 @@ export function NewReleasesHeroCard() {
   useEffect(() => {
     fetch("/api/apps/new-releases", { cache: "no-store" })
       .then((r) => r.json())
-      .then((d) => { if (Array.isArray(d.data) && d.data.length) setApp({ id: d.data[0].slug || d.data[0].id, name: d.data[0].name, category: d.data[0].category, description: "", longDescription: "", accent: "#6C63FF", icon: "🚀", downloads: "—", rating: "4.9", platforms: [], plans: [], newReleaseImageUrl: d.data[0].newReleaseImageUrl, latestVersion: d.data[0].latestVersion }); })
+      .then((d) => { if (Array.isArray(d.data) && d.data.length) setApp({ id: d.data[0].slug || d.data[0].id, name: d.data[0].name, category: d.data[0].category, description: "", longDescription: "", accent: "#6C63FF", icon: "🚀", iconUrl: d.data[0].iconUrl || null, downloads: "—", rating: "4.9", platforms: [], plans: [], newReleaseImageUrl: d.data[0].newReleaseImageUrl, latestVersion: d.data[0].latestVersion }); })
       .catch(() => {});
   }, []);
   return (
@@ -127,7 +131,7 @@ export function NewReleasesHeroCard() {
       <p className="text-xs font-bold uppercase tracking-widest text-ink/40 dark:text-white/50">{t("newRelease")}</p>
       {app ? (
         <Link href={`/apps/${app.id}`} className="mt-2.5 flex items-center gap-3 rounded-xl bg-ink/[0.02] p-2 -m-2 hover:bg-ink/5 dark:hover:bg-white/5 transition group-hover/newrelease:bg-ink/[0.04]">
-          {app.newReleaseImageUrl ? <img src={app.newReleaseImageUrl} alt={app.name} className="h-10 w-10 shrink-0 rounded-xl object-cover border border-ink/5 dark:border-white/10 transition group-hover/newrelease:scale-105" /> : <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary text-white transition group-hover/newrelease:scale-105 group-hover/newrelease:bg-primary/90">🚀</span>}
+          {app.newReleaseImageUrl ? <img src={app.newReleaseImageUrl} alt={app.name} className="h-10 w-10 shrink-0 rounded-xl object-cover border border-ink/5 dark:border-white/10 transition group-hover/newrelease:scale-105" /> : app.iconUrl ? <img src={app.iconUrl} alt={app.name} className="h-10 w-10 shrink-0 rounded-xl object-cover border border-ink/5 dark:border-white/10 transition group-hover/newrelease:scale-105" /> : <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary text-white transition group-hover/newrelease:scale-105 group-hover/newrelease:bg-primary/90">🚀</span>}
           <div className="min-w-0">
             <p className="truncate text-sm font-bold leading-tight text-ink dark:text-white group-hover/newrelease:text-primary dark:group-hover/newrelease:text-secondary transition-colors">{app.name}</p>
             <p className="truncate text-xs text-ink/50 dark:text-white/50">{app.latestVersion ? `v${app.latestVersion}` : app.category}</p>

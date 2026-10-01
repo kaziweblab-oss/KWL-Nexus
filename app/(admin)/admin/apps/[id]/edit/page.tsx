@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, ExternalLink, Loader2, Package, Rocket, Save, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, ExternalLink, Loader2, Package, Rocket, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { TutorialEditor } from "@/components/admin/TutorialEditor";
@@ -41,7 +41,7 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
   const [form, setForm] = useState({ name: "", description: "", category: "", pricing: "free", websiteUrl: "", iconUrl: "" });
   const [msgKind, setMsgKind] = useState<"success" | "error" | "">("");
   const [logoMsg, setLogoMsg] = useState("");
-  const [showReleases, setShowReleases] = useState(false);
+  const [releasesOpen, setReleasesOpen] = useState(false);
 
   const featureList = app?.features ?? [];
   const featuresDate = app?.featuresUpdatedAt ? new Date(app.featuresUpdatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
@@ -169,41 +169,28 @@ export default function AdminAppEditPage({ params }: { params: { id: string } })
       )}
 
       <div className="mt-8">
-        <h2 className="mb-5 text-2xl font-bold text-ink dark:text-white">GitHub releases</h2>
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-ink/10 bg-white p-5 dark:border-white/10 dark:bg-[#1a1a2e]">
-          <div className="flex items-center gap-3">
+        <button onClick={() => setReleasesOpen((v) => !v)} aria-expanded={releasesOpen} className="flex w-full flex-wrap items-center justify-between gap-4 rounded-2xl border border-ink/10 bg-white p-5 text-left dark:border-white/10 dark:bg-[#1a1a2e]">
+          <span className="flex items-center gap-3">
             <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary dark:text-secondary">
               <Package size={20} />
             </span>
-            <div>
-              <p className="font-bold text-ink dark:text-white">
-                {app.latestVersion ? `v${app.latestVersion}` : "No version yet"}
-                {app.latestVersion && <span className="ml-2 rounded-full bg-emerald-500 px-2 py-0.5 text-[11px] font-bold text-white">Current</span>}
-              </p>
-              <p className="mt-0.5 text-xs text-ink/50 dark:text-white/50">{app.githubOwner}/{app.githubRepo}</p>
-            </div>
+            <span>
+              <span className="block text-sm font-bold uppercase tracking-[0.18em] text-primary">GitHub releases</span>
+              <span className="mt-0.5 block text-sm text-ink/55 dark:text-white/55">
+                {app.latestVersion ? `v${app.latestVersion} applied` : "No version applied yet"} · {app.githubOwner}/{app.githubRepo}
+              </span>
+            </span>
+          </span>
+          <span className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition ${releasesOpen ? "bg-ink/5 text-ink/60 dark:bg-white/10 dark:text-white/60" : "bg-primary text-white hover:bg-primary/90"}`}>
+            {releasesOpen ? "Collapse" : "Manage releases"} <ChevronDown size={14} className={`transition ${releasesOpen ? "rotate-180" : ""}`} />
+          </span>
+        </button>
+        {releasesOpen && (
+          <div className="mt-3 max-h-[560px] overflow-y-auto rounded-2xl border border-ink/10 bg-[#f6f7fb] p-4 dark:border-white/10 dark:bg-[#13172b] sm:p-5">
+            <AppReleaseManager owner={app.githubOwner ?? ""} repo={app.githubRepo ?? ""} appSlug={key} currentVersion={app.latestVersion} onApplied={() => void load()} />
           </div>
-          <button onClick={() => setShowReleases(true)} className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary/90">
-            Manage releases
-          </button>
-        </div>
+        )}
       </div>
-      {showReleases && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setShowReleases(false)}>
-          <div onClick={(e) => e.stopPropagation()} className="max-h-[85vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-ink/10 bg-[#f6f7fb] p-5 dark:border-white/10 dark:bg-[#13172b] sm:p-6">
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-ink dark:text-white">GitHub releases</h2>
-                <p className="mt-1 text-sm text-ink/55 dark:text-white/55">{app.githubOwner}/{app.githubRepo} — pick a release to apply its version + files.</p>
-              </div>
-              <button onClick={() => setShowReleases(false)} aria-label="Close releases" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-ink/60 hover:bg-red-50 hover:text-red-600 dark:bg-white/10 dark:text-white/60 dark:hover:bg-red-500 dark:hover:text-white">
-                <X size={16} />
-              </button>
-            </div>
-            <AppReleaseManager owner={app.githubOwner ?? ""} repo={app.githubRepo ?? ""} appSlug={key} currentVersion={app.latestVersion} onApplied={() => { void load(); setShowReleases(false); }} />
-          </div>
-        </div>
-      )}
 
       <div className="mt-10">
         <h2 className="mb-5 text-2xl font-bold text-ink dark:text-white">Details</h2>
