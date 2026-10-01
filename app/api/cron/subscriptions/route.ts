@@ -12,7 +12,19 @@ export async function POST(request: Request) {
   if (!process.env.CRON_SECRET || authorization !== `Bearer ${process.env.CRON_SECRET}`) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   await connectToDatabase();
   const now = new Date();
-  const result = await Subscription.updateMany({ status: "active", $or: [{ endDate: { $lte: now } }, { endsAt: { $lte: now } }] }, { $set: { status: "expired" } });
+  // Expire in two steps so linked entitlements die with their subscription.
+  // Bounded and idempotent: re-running only touches rows still marked active.
+  const expiring = await Subscription.find({ status: "active", $or: [{ endDate: { $lte: now } }, { endsAt: { $lte: now } }] }).select("_id").limit(500).lean() as Array<{ _id: unknown }>;
+  const ids = expiring.map((s) => s._id);
+  let expired = 0;
+  if (ids.length) {
+    const result = await Subscription.updateMany({ _id: { $in: ids }, status: "active" }, { $set: { status: "expired" } });
+    expired = result.modifiedCount;
+    try {
+      const Entitlement = (await import("@/models/Entitlement")).default;
+      await Entitlement.updateMany({ subscriptionId: { $in: ids }, status: "active" }, { $set: { status: "expired" } });
+    } catch {}
+  }
 
   // 5 days before expiration — notify with app name + renew
   const fiveDaysFromNow = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
@@ -53,7 +65,7 @@ export async function POST(request: Request) {
     } catch {}
   }
 
-  return NextResponse.json({ data: { expired: result.modifiedCount, notified5d: notified, checkedAt: now.toISOString() } });
+  return NextResponse.json({ data: { expired, notified5d: notified, checkedAt: now.toISOString() } });
 }
 
 // Vercel Cron invokes scheduled routes with GET; keep POST available for manual runs.

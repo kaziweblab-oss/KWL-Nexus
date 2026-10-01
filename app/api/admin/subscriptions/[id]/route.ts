@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/auth";
 import { isAdmin } from "@/lib/auth/admin";
 import { connectToDatabase } from "@/lib/db/connect";
 import Subscription from "@/models/Subscription";
+import Entitlement from "@/models/Entitlement";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -53,6 +54,14 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       }
     }
     await sub.save();
+    // Keep download access in sync: cancelled/expired kills the grant, resume restores it.
+    try {
+      if (status === "cancelled" || status === "expired") {
+        await Entitlement.updateMany({ subscriptionId: sub._id, status: "active" }, { $set: { status: "revoked" } });
+      } else if (status === "active") {
+        await Entitlement.updateMany({ subscriptionId: sub._id, status: "revoked" }, { $set: { status: "active", endsAt: sub.endsAt ?? null } });
+      }
+    } catch {}
     return NextResponse.json({ data: sub });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "DB error" }, { status: 500 });
@@ -65,6 +74,9 @@ export async function DELETE(_: Request, { params }: { params: { id: string } })
   try {
     const del = await Subscription.findByIdAndDelete(params.id).lean();
     if (!del) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    try {
+      await Entitlement.updateMany({ subscriptionId: (del as { _id: unknown })._id, status: "active" }, { $set: { status: "revoked" } });
+    } catch {}
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "DB error" }, { status: 500 });

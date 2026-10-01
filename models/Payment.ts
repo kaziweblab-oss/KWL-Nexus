@@ -20,6 +20,7 @@ const PaymentSchema = new Schema(
     deadline: Date,
     providerPaymentId: String,
     paidAt: Date,
+    refundedAt: Date,
   },
   { timestamps: true },
 );

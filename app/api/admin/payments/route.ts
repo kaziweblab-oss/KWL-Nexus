@@ -29,14 +29,14 @@ export async function GET() {
 export async function PATCH(request: Request) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-  const body = await request.json() as { paymentId?: string; action?: "verify" | "reject"; deadline?: string; notes?: string };
+  const body = await request.json() as { paymentId?: string; action?: "verify" | "reject" | "refund"; deadline?: string; notes?: string };
   if (!body.paymentId || !body.action) return NextResponse.json({ error: "paymentId and action are required" }, { status: 400 });
   if (!mongoose.Types.ObjectId.isValid(body.paymentId)) return NextResponse.json({ error: "Invalid paymentId" }, { status: 400 });
   const payment = await Payment.findById(body.paymentId);
   if (!payment) return NextResponse.json({ error: "Payment not found" }, { status: 404 });
   // Idempotency: re-verifying an already-succeeded payment must NOT create a
   // duplicate subscription. Rejecting a succeeded payment requires the refund flow.
-  if (payment.status === "succeeded") {
+  if (payment.status === "succeeded" && body.action !== "refund") {
     if (body.action === "verify") return NextResponse.json({ data: { id: payment.id, status: payment.status, subscriptionId: payment.subscriptionId } });
     return NextResponse.json({ error: "Payment already succeeded. Use refund instead of reject." }, { status: 409 });
   }
@@ -62,6 +62,50 @@ export async function PATCH(request: Request) {
           email: email || undefined,
           title: "Payment rejected",
           message: `Your payment request${payment.transactionId ? ` (TXN: ${payment.transactionId})` : ""} for ${payment.appId || "your order"} was rejected.${body.notes ? ` Reason: ${body.notes}` : ""}`,
+          type: "payment",
+          appId: payment.appId,
+        });
+      }
+    } catch {}
+    return NextResponse.json({ data: { id: payment.id, status: payment.status } });
+  }
+  if (body.action === "refund") {
+    if (payment.status !== "succeeded") {
+      return NextResponse.json({ error: "Only successful payments can be refunded" }, { status: 409 });
+    }
+    payment.status = "refunded";
+    payment.verifiedBy = admin._id;
+    payment.verifiedAt = new Date();
+    payment.refundedAt = new Date();
+    payment.notes = body.notes;
+    await payment.save();
+    // Cascade: subscription cancelled, entitlements revoked, order refunded.
+    try {
+      const Entitlement = (await import("@/models/Entitlement")).default;
+      const Order = (await import("@/models/Order")).default;
+      if (payment.subscriptionId) {
+        await Subscription.findByIdAndUpdate(payment.subscriptionId, { $set: { status: "cancelled", endsAt: new Date(), endDate: new Date() } });
+        await Entitlement.updateMany({ subscriptionId: payment.subscriptionId, status: "active" }, { $set: { status: "revoked" } });
+      }
+      const order = await Order.findOne({ paymentId: payment._id });
+      if (order) {
+        order.status = "refunded";
+        await order.save();
+        await Entitlement.updateMany({ orderId: order._id, status: "active" }, { $set: { status: "revoked" } });
+      }
+    } catch (cascadeErr) {
+      console.warn("Refund cascade incomplete:", (cascadeErr as Error)?.message);
+    }
+    try {
+      const User = (await import("@/models/User")).default;
+      const targetUser = await User.findById(payment.userId).select("email").lean() as any;
+      const email = (targetUser?.email || "").toLowerCase().trim();
+      if (email || payment.userId) {
+        await Notification.create({
+          userId: payment.userId,
+          email: email || undefined,
+          title: "Payment refunded",
+          message: `Your payment${payment.transactionId ? ` (TXN: ${payment.transactionId})` : ""} for ${payment.appId || "your order"} has been refunded.${body.notes ? ` Note: ${body.notes}` : ""}`,
           type: "payment",
           appId: payment.appId,
         });
