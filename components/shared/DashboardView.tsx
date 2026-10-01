@@ -17,7 +17,7 @@ export function DashboardView() {
   const isDark = mounted ? resolvedTheme === "dark" : false;
   const [imgError, setImgError] = useState(false);
   const [stats, setStats] = useState<{ downloads: number; subscriptions: number; totalSpent: number; currency: string } | null>(null);
-  const [myApps, setMyApps] = useState<{ appId: string; appName: string; planName: string; accent: string; icon: string }[]>([]);
+  const [myApps, setMyApps] = useState<{ appId: string; appName: string; planName: string; accent: string; icon: string; downloadPath?: string; expiresLabel?: string }[]>([]);
   const [recent, setRecent] = useState<{ id: string; title: string; time: string }[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
 
@@ -28,14 +28,17 @@ export function DashboardView() {
     async function load() {
       setStatsLoading(true);
       try {
-        const [subRes, payRes] = await Promise.all([
+        const [subRes, payRes, entRes] = await Promise.all([
           fetch("/api/user/subscriptions", { cache: "no-store" }),
           fetch("/api/payment/history", { cache: "no-store" }),
+          fetch("/api/user/entitlements", { cache: "no-store" }),
         ]);
         const subJson = subRes.ok ? await subRes.json().catch(() => ({})) : {};
         const payJson = payRes.ok ? await payRes.json().catch(() => ({})) : {};
+        const entJson = entRes.ok ? await entRes.json().catch(() => ({})) : {};
         const subs: any[] = Array.isArray(subJson.data) ? subJson.data : Array.isArray(subJson.subscriptions) ? subJson.subscriptions : [];
         const pays: any[] = Array.isArray(payJson.data) ? payJson.data : [];
+        const ents: any[] = Array.isArray(entJson.data) ? entJson.data : [];
         if (cancelled) return;
         const activeSubs = subs.filter((s) => String(s.status).toLowerCase() === "active");
         // dynamic with real state — no hardcoded 12/1/$48
@@ -43,9 +46,23 @@ export function DashboardView() {
         const total = succeededPays.reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
         const currency = succeededPays[0]?.currency || subs[0]?.planId?.currency || "BDT";
         setStats({ downloads: succeededPays.length || activeSubs.length, subscriptions: activeSubs.length, totalSpent: total, currency });
-        // my apps — active plan features
+        // my apps — live entitlements first (with download + expiry), legacy
+        // subscription mapping as fallback for pre-entitlement grants
         const { getApp } = await import("@/lib/data/apps");
-        const appsList = activeSubs.map((s: any) => {
+        const appsList = (ents.length > 0 ? ents.map((e: any) => {
+          const rawAppId = e.appSlug;
+          const planName = e.planName || (e.type === "lifetime" ? "Lifetime" : "Plan");
+          const app = rawAppId ? getApp(String(rawAppId)) : null;
+          return {
+            appId: String(rawAppId || ""),
+            appName: e.appName || app?.name || String(rawAppId || planName),
+            planName,
+            accent: app?.accent || "#6C63FF",
+            icon: app?.icon || "◈",
+            downloadPath: e.downloadPath,
+            expiresLabel: e.lifetime ? "Lifetime" : e.endsAt ? `Expires ${new Date(e.endsAt).toLocaleDateString()}` : undefined,
+          };
+        }) : activeSubs.map((s: any) => {
           const rawAppId = s.appId || s.planId?.appId || s.planId?.appSlug || s.plan?.appId;
           const planName = s.planId?.name || s.plan?.name || "Plan";
           const app = rawAppId ? getApp(String(rawAppId)) : null;
@@ -56,7 +73,7 @@ export function DashboardView() {
             accent: app?.accent || "#6C63FF",
             icon: app?.icon || "◈",
           };
-        }).filter((a: any) => a.appId);
+        })).filter((a: any) => a.appId);
         setMyApps(appsList);
         // recent activity — last 3 payments
         const recentList = pays.slice(0, 3).map((p: any) => ({
@@ -154,10 +171,13 @@ export function DashboardView() {
                 {myApps.map((a) => (
                   <div key={a.appId} className={`flex items-center gap-3 rounded-xl border p-3 ${isDark ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-50"}`}>
                     <span className="grid h-9 w-9 place-items-center rounded-lg text-white text-sm" style={{ backgroundColor: a.accent }}>{a.icon}</span>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className={`text-sm font-semibold truncate ${isDark ? "text-white" : "text-slate-900"}`}>{a.appName} — {a.planName}</p>
-                      <p className={`text-xs leading-5 ${isDark ? "text-white/60" : "text-slate-600"}`}>আপনার {a.planName} প্ল্যানের ফিচার সক্রিয় হয়ে গেছে, চালাতে পারেন।</p>
+                      <p className={`text-xs leading-5 ${isDark ? "text-white/60" : "text-slate-600"}`}>{a.expiresLabel ?? "Active"}</p>
                     </div>
+                    {a.downloadPath && (
+                      <a href={a.downloadPath} className="shrink-0 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary/90">Download</a>
+                    )}
                   </div>
                 ))}
               </div>
