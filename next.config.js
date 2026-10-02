@@ -24,7 +24,19 @@ const withPWA = require("next-pwa")({
 
 const nextConfig = {
 	async headers() {
-		return [{ source: "/(.*)", headers: [{ key: "X-Content-Type-Options", value: "nosniff" }, { key: "X-Frame-Options", value: "DENY" }, { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" }, { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" }] }];
+		// Private/personalized APIs must never be stored by browsers/CDNs.
+		// (Service-worker caching is separately restricted in runtimeCaching above.)
+		const noStore = [{ key: "Cache-Control", value: "private, no-store" }];
+		return [
+			{ source: "/api/payment/:path*", headers: noStore },
+			{ source: "/api/user/:path*", headers: noStore },
+			{ source: "/api/admin/:path*", headers: noStore },
+			{ source: "/api/auth/:path*", headers: noStore },
+			{ source: "/api/notifications/:path*", headers: noStore },
+			{ source: "/api/cron/:path*", headers: noStore },
+			{ source: "/api/webhooks/:path*", headers: noStore },
+			{ source: "/api/download/:path*", headers: noStore },
+			{ source: "/(.*)", headers: [{ key: "X-Content-Type-Options", value: "nosniff" }, { key: "X-Frame-Options", value: "DENY" }, { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" }, { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" }] }];
 	},
 	experimental: {
 		webpackBuildWorker: false,

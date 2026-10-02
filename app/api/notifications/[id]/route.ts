@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/auth";
 import { connectToDatabase } from "@/lib/db/connect";
 import Notification from "@/models/Notification";
 import mongoose from "mongoose";
+import { dbErrorResponse } from "@/lib/api/validate";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -22,6 +23,6 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ data: updated });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "DB error" }, { status: 500 });
+    return dbErrorResponse(error, "Notification PATCH failed");
   }
 }

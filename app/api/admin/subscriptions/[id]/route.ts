@@ -5,6 +5,7 @@ import { isAdmin } from "@/lib/auth/admin";
 import { connectToDatabase } from "@/lib/db/connect";
 import Subscription from "@/models/Subscription";
 import Entitlement from "@/models/Entitlement";
+import { isValidId, invalidIdResponse, dbErrorResponse } from "@/lib/api/validate";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -24,6 +25,7 @@ async function requireAdmin() {
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+  if (!isValidId(params.id)) return invalidIdResponse();
   try {
     const body = await request.json() as { status?: string; action?: string };
     const raw = (body.status ?? body.action ?? "").toLowerCase();
@@ -64,7 +66,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     } catch {}
     return NextResponse.json({ data: sub });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "DB error" }, { status: 500 });
+    return dbErrorResponse(error, "Subscription PATCH failed");
   }
 }
 

@@ -13,6 +13,7 @@ import PaymentConfig from "@/models/PaymentConfig";
 import Notification from "@/models/Notification";
 import { API_ERRORS } from "@/lib/api/errors";
 import { notifyAdmins } from "@/lib/notifications/admin";
+import { checkRateLimit, clientIp } from "@/lib/auth/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,11 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: API_ERRORS.USER_NOT_LOGGED_IN }, { status: 401 });
+    }
+    // Slow down payment spam/flooding (per user + per IP).
+    const payer = session.user.email.toLowerCase();
+    if (!checkRateLimit(`pay-req:user:${payer}`, 10, 60 * 60 * 1000) || !checkRateLimit(`pay-req:ip:${clientIp(req)}`, 30, 60 * 60 * 1000)) {
+      return NextResponse.json({ error: "Too many payment requests. Please try again later." }, { status: 429 });
     }
 
     const body = await req.json();

@@ -42,6 +42,7 @@ export const authOptions: NextAuthOptions = {
         if (!target) return null;
 
         const { getMemoryOtp, deleteMemoryOtp } = await import("@/lib/otp/memory");
+        const { verifyOtpCode } = await import("@/lib/otp/hash");
 
         let otpValid = false;
         let otpRecord: any = null;
@@ -57,7 +58,7 @@ export const authOptions: NextAuthOptions = {
               return null;
             }
             if (otpRecord.attempts >= 5) return null;
-            if (otpRecord.code !== code) {
+            if (!verifyOtpCode(code, otpRecord.code)) {
               await Otp.updateOne({ _id: otpRecord._id }, { $inc: { attempts: 1 } });
               return null;
             }
@@ -69,7 +70,7 @@ export const authOptions: NextAuthOptions = {
         }
         if (!otpValid) {
           const mem = getMemoryOtp(channel, target!);
-          if (!mem || mem.code !== code) {
+          if (!mem || !verifyOtpCode(code, mem.codeHash)) {
             if (mem) {
               const { bumpMemoryOtpAttempts } = await import("@/lib/otp/memory");
               bumpMemoryOtpAttempts(channel, target!);

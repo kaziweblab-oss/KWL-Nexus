@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { authenticateApiRequest, assertKeyScope } from "@/lib/api/auth";
+import { checkRateLimit, clientIp } from "@/lib/auth/rateLimit";
 import { connectToDatabase } from "@/lib/db/connect";
 import Feedback from "@/models/Feedback";
 
@@ -11,6 +12,12 @@ export async function POST(request: Request) {
   try {
     const auth = await authenticateApiRequest(request);
     if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
+    // Spam guard (per user + per IP). Desktop fleets share one key — key-level
+    // limiting already applies inside authenticateApiRequest.
+    const fbIp = clientIp(request);
+    if (!checkRateLimit(`feedback:user:${auth.userId}`, 30, 60 * 60 * 1000) || !checkRateLimit(`feedback:ip:${fbIp}`, 60, 60 * 60 * 1000)) {
+      return NextResponse.json({ error: "Too many reports. Please try again later." }, { status: 429 });
+    }
     let body: unknown;
     try {
       const text = await request.text();

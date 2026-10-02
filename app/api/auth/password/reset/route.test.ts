@@ -23,6 +23,7 @@ jest.mock("@/models/User", () => ({
 }));
 
 import bcrypt from "bcryptjs";
+import { hashOtpCode } from "@/lib/otp/hash";
 import { POST } from "./route";
 
 function req(body: unknown) {
@@ -41,7 +42,7 @@ beforeEach(() => {
 
 test("resets password with a valid OTP and consumes it", async () => {
   const user: any = { passwordHash: "old", save: mockUserSave };
-  mockOtpFind.mockReturnValue({ sort: () => Promise.resolve({ _id: "otp1", code: "123456", expiresAt: new Date(Date.now() + 60000), attempts: 0 }) });
+  mockOtpFind.mockReturnValue({ sort: () => Promise.resolve({ _id: "otp1", code: hashOtpCode("123456"), expiresAt: new Date(Date.now() + 60000), attempts: 0 }) });
   mockUserFind.mockResolvedValue(user);
   const res: any = await POST(req({ email: "a@b.com", code: "123456", newPassword: "newpass1" }) as any);
   expect(res.status).toBe(200);
@@ -50,7 +51,7 @@ test("resets password with a valid OTP and consumes it", async () => {
 });
 
 test("counts a wrong code instead of resetting", async () => {
-  mockOtpFind.mockReturnValue({ sort: () => Promise.resolve({ _id: "otp1", code: "123456", expiresAt: new Date(Date.now() + 60000), attempts: 0 }) });
+  mockOtpFind.mockReturnValue({ sort: () => Promise.resolve({ _id: "otp1", code: hashOtpCode("123456"), expiresAt: new Date(Date.now() + 60000), attempts: 0 }) });
   const res: any = await POST(req({ email: "a@b.com", code: "000000", newPassword: "newpass1" }) as any);
   expect(res.status).toBe(400);
   expect(mockOtpUpdate).toHaveBeenCalled();

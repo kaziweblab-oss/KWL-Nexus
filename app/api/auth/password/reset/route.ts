@@ -5,6 +5,7 @@ import { connectToDatabase } from "@/lib/db/connect";
 import User from "@/models/User";
 import Otp from "@/models/Otp";
 import { getMemoryOtp, bumpMemoryOtpAttempts, deleteMemoryOtp } from "@/lib/otp/memory";
+import { verifyOtpCode } from "@/lib/otp/hash";
 import { checkRateLimit, clientIp } from "@/lib/auth/rateLimit";
 
 export const dynamic = "force-dynamic";
@@ -61,7 +62,7 @@ export async function POST(req: NextRequest) {
     const rec = await Otp.findOne(targetQuery).sort({ createdAt: -1 });
     if (!rec) {
       const mem = getMemoryOtp(channel, target);
-      if (!mem || mem.code !== code) {
+      if (!mem || !verifyOtpCode(code, mem.codeHash)) {
         if (mem) bumpMemoryOtpAttempts(channel, target);
         return NextResponse.json({ error: "Invalid or expired code" }, { status: 400 });
       }
@@ -72,7 +73,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Code expired" }, { status: 400 });
       }
       if (rec.attempts >= 5) return NextResponse.json({ error: "Too many attempts" }, { status: 429 });
-      if (rec.code !== code) {
+      if (!verifyOtpCode(code, rec.code)) {
         await Otp.updateOne({ _id: rec._id }, { $inc: { attempts: 1 } });
         return NextResponse.json({ error: "Invalid or expired code" }, { status: 400 });
       }

@@ -1,8 +1,10 @@
 // In-memory OTP fallback when MongoDB is unavailable (e.g., Atlas IP not whitelisted).
 // This allows dev testing with previewCode even if DB is down.
-// Not for production — use persistent store.
+// Not for production — use persistent store. Codes are stored hashed (see lib/otp/hash).
 
-type Entry = { code: string; expiresAt: Date; channel: "email" | "phone"; attempts: number };
+import { hashOtpCode, verifyOtpCode } from "./hash";
+
+type Entry = { codeHash: string; expiresAt: Date; channel: "email" | "phone"; attempts: number };
 
 const globalStore = globalThis as unknown as { __otpMemory?: Map<string, Entry> };
 
@@ -16,7 +18,15 @@ function keyFor(channel: "email" | "phone", target: string) {
 }
 
 export function setMemoryOtp(channel: "email" | "phone", target: string, code: string, expiresAt: Date) {
-  getStore().set(keyFor(channel, target), { code, expiresAt, channel, attempts: 0 });
+  getStore().set(keyFor(channel, target), { codeHash: hashOtpCode(code), expiresAt, channel, attempts: 0 });
+}
+
+// Timing-safe single-use check: true once, then the entry is consumed.
+export function matchMemoryOtp(channel: "email" | "phone", target: string, code: string): boolean {
+  const entry = getMemoryOtp(channel, target);
+  if (!entry || !verifyOtpCode(code, entry.codeHash)) return false;
+  getStore().delete(keyFor(channel, target));
+  return true;
 }
 
 // Increment failed-attempt counter; entry is removed once the limit is reached.

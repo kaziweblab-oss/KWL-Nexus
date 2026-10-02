@@ -3,6 +3,7 @@ import { z } from "zod";
 import { connectToDatabase } from "@/lib/db/connect";
 import Otp from "@/models/Otp";
 import { setMemoryOtp } from "@/lib/otp/memory";
+import { hashOtpCode } from "@/lib/otp/hash";
 import { checkRateLimit, clientIp } from "@/lib/auth/rateLimit";
 
 export const dynamic = "force-dynamic";
@@ -76,7 +77,8 @@ export async function POST(req: NextRequest) {
       await connectToDatabase();
       if (channel === "email") await Otp.deleteMany({ email: target });
       else await Otp.deleteMany({ phone: target });
-      await Otp.create({ email, phone, channel, code, expiresAt });
+      // Store hashed — a DB read must never expose a live code (see lib/otp/hash).
+      await Otp.create({ email, phone, channel, code: hashOtpCode(code), expiresAt });
     } catch (dbErr) {
       console.warn("[OTP] DB unavailable, using memory fallback:", (dbErr as Error).message);
       usedMemoryFallback = true;

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { connectToDatabase } from "@/lib/db/connect";
 import Otp from "@/models/Otp";
 import { getMemoryOtp, bumpMemoryOtpAttempts } from "@/lib/otp/memory";
+import { verifyOtpCode } from "@/lib/otp/hash";
 import { checkRateLimit, clientIp } from "@/lib/auth/rateLimit";
 
 export const dynamic = "force-dynamic";
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: "Code expired" }, { status: 400 });
         }
         if (record.attempts >= 5) return NextResponse.json({ error: "Too many attempts" }, { status: 429 });
-        if (record.code !== code) {
+        if (!verifyOtpCode(code, record.code)) {
           await Otp.updateOne({ _id: record._id }, { $inc: { attempts: 1 } });
           return NextResponse.json({ error: "Invalid code" }, { status: 400 });
         }
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
 
     const mem = getMemoryOtp(channel, target);
     if (!mem) return NextResponse.json({ error: "Invalid code" }, { status: 400 });
-    if (mem.code !== code) {
+    if (!verifyOtpCode(code, mem.codeHash)) {
       const attempts = bumpMemoryOtpAttempts(channel, target);
       if (attempts >= 5) return NextResponse.json({ error: "Too many attempts" }, { status: 429 });
       return NextResponse.json({ error: "Invalid code" }, { status: 400 });
