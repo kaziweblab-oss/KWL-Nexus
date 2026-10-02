@@ -79,3 +79,15 @@ test("ignores non-release events", async () => {
   const json = await res.json();
   expect(json).toEqual({ received: true, ignored: true });
 });
+
+test("duplicate delivery of the same tag stays idempotent", async () => {
+  const payload = releasePayload();
+  const before = mockUpsert.mock.calls.length;
+  const r1: any = await POST(req(payload, signed(payload)));
+  const r2: any = await POST(req(payload, signed(payload)));
+  expect(r1.status).toBe(200);
+  expect(r2.status).toBe(200);
+  expect(await r2.json()).toEqual({ received: true, tag: "v1.2.3" });
+  // Same upsert twice — the unique {owner, repo, tag} index dedupes at the DB layer.
+  expect(mockUpsert.mock.calls.length).toBe(before + 2);
+});

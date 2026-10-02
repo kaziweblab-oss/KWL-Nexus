@@ -15,18 +15,34 @@ jest.mock("@/models/Payment", () => ({
 const mockSubUpdate = jest.fn().mockResolvedValue({});
 jest.mock("@/models/Subscription", () => ({
   __esModule: true,
-  default: { findByIdAndUpdate: (...args: any[]) => (mockSubUpdate as any)(...args) },
+  default: {
+    findByIdAndUpdate: (...args: any[]) => (mockSubUpdate as any)(...args),
+    create: jest.fn().mockResolvedValue({ _id: "sub1", id: "sub1", endsAt: new Date(), endDate: new Date() }),
+  },
 }));
 const mockEntUpdate = jest.fn().mockResolvedValue({});
+const mockEntCreate = jest.fn().mockResolvedValue({ _id: "ent1" });
 jest.mock("@/models/Entitlement", () => ({
   __esModule: true,
-  default: { updateMany: (...args: any[]) => (mockEntUpdate as any)(...args) },
+  default: {
+    updateMany: (...args: any[]) => (mockEntUpdate as any)(...args),
+    create: (...args: any[]) => (mockEntCreate as any)(...args),
+  },
 }));
 const mockOrderSave = jest.fn().mockResolvedValue(undefined);
 const mockOrderFind = jest.fn();
+const mockOrderCreate = jest.fn().mockResolvedValue({ _id: "o1", save: jest.fn() });
 jest.mock("@/models/Order", () => ({
   __esModule: true,
-  default: { findOne: (...args: any[]) => (mockOrderFind as any)(...args) },
+  default: {
+    findOne: (...args: any[]) => (mockOrderFind as any)(...args),
+    findOneAndUpdate: jest.fn().mockResolvedValue(null),
+    create: (...args: any[]) => (mockOrderCreate as any)(...args),
+  },
+}));
+jest.mock("@/models/Plan", () => ({
+  __esModule: true,
+  default: { findById: () => Promise.resolve({ _id: "p1", name: "Monthly", interval: "month", appSlug: "demo" }) },
 }));
 jest.mock("@/models/User", () => ({
   __esModule: true,
@@ -78,4 +94,19 @@ test("refund of a non-successful payment is rejected", async () => {
   const res: any = await PATCH(req({ paymentId: "507f1f77bcf86cd799439011", action: "refund" }));
   expect(res.status).toBe(409);
   expect(mockSubUpdate).not.toHaveBeenCalled();
+});
+
+test("verify approves payment, activates subscription and grants entitlement", async () => {
+  mockPaymentFind.mockResolvedValue({
+    _id: "pay3", status: "pending", userId: "u1", planId: "p1", appId: "demo",
+    amount: 100, currency: "BDT", transactionId: "TX9", save: mockPaymentSave,
+  });
+  mockOrderFind.mockResolvedValue(null);
+  const res: any = await PATCH(req({ paymentId: "507f1f77bcf86cd799439011", action: "verify" }));
+  expect(res.status).toBe(200);
+  const json = await res.json();
+  expect(json.data.status).toBe("succeeded");
+  expect(json.data.subscriptionId).toBeDefined();
+  expect(mockEntCreate).toHaveBeenCalledWith(expect.objectContaining({ userId: "u1", appSlug: "demo", status: "active" }));
+  expect(mockOrderCreate).toHaveBeenCalledWith(expect.objectContaining({ status: "paid" }));
 });
