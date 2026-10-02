@@ -3,25 +3,19 @@ import { connectToDatabase } from "@/lib/db/connect";
 import PaymentMethod from "@/models/PaymentMethod";
 import { checkPaymentMethodHealth } from "@/lib/payments/health";
 import { notifyAdmins } from "@/lib/notifications/admin";
+import { isCronAuthorized } from "@/lib/cron/auth";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-function isAuthorized(request: Request): boolean {
-  const auth = request.headers.get("authorization") || "";
-  const expected = `Bearer ${process.env.CRON_SECRET}`;
-  if (!process.env.CRON_SECRET) return false;
-  return auth === expected;
-}
-
 export async function GET(request: Request) {
-  if (!isAuthorized(request)) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   return handleCron();
 }
 
 export async function POST(request: Request) {
-  if (!isAuthorized(request)) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   return handleCron();

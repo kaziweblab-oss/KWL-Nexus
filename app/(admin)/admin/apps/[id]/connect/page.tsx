@@ -89,7 +89,7 @@ export default function AppConnectPage({ params }: { params: { id: string } }) {
       body: "Paste these three pairs into the app settings (Nexus section).",
       values: [
         { label: "APPID", value: slug },
-        { label: "BASEURL", value: "https://kwl-nexus.onrender.com" },
+        { label: "BASEURL", value: typeof window !== "undefined" ? window.location.origin : "" },
         { label: "APIKEY", value: "<paste-the-key-here>" },
       ],
     },

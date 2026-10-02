@@ -31,7 +31,7 @@ export const apiEndpoints = [
 export const openApiDocument = {
   openapi: "3.0.3",
   info: { title: "KWL-NEXUS API", version: "1.0.0", description: "App store APIs authenticated with an x-api-key header." },
-  servers: [{ url: "http://localhost:3000" }],
+  servers: [{ url: process.env.NEXTAUTH_URL ?? "http://localhost:3000" }],
   security: [{ ApiKeyAuth: [] }],
   components: { securitySchemes: { ApiKeyAuth: { type: "apiKey", in: "header", name: "x-api-key" } } },
   paths: Object.fromEntries(apiEndpoints.map((endpoint) => {

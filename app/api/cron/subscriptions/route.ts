@@ -6,11 +6,11 @@ import Plan from "@/models/Plan";
 import User from "@/models/User";
 import { apps } from "@/lib/data/apps";
 import { logEvent } from "@/lib/observability/log";
+import { isCronAuthorized } from "@/lib/cron/auth";
 
 // Run this endpoint from a daily scheduler to expire subscriptions consistently and notify 5 days before.
 export async function POST(request: Request) {
-  const authorization = request.headers.get("authorization");
-  if (!process.env.CRON_SECRET || authorization !== `Bearer ${process.env.CRON_SECRET}`) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!isCronAuthorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   await connectToDatabase();
   const now = new Date();
   // Expire in two steps so linked entitlements die with their subscription.
