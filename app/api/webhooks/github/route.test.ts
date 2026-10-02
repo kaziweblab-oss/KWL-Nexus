@@ -13,6 +13,10 @@ jest.mock("@/models/Release", () => ({
     updateOne: (...args: any[]) => (mockReleaseUpdate as any)(...args),
   },
 }));
+jest.mock("@/models/AuditLog", () => ({
+  __esModule: true,
+  default: { create: jest.fn().mockResolvedValue({}) },
+}));
 jest.mock("@/models/App", () => ({
   __esModule: true,
   default: { findOne: () => ({ select: () => ({ lean: () => Promise.resolve({ _id: "app1" }) }) }) },

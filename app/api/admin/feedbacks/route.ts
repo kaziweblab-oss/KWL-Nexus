@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/auth";
 import { isAdmin } from "@/lib/auth/admin";
 import { connectToDatabase } from "@/lib/db/connect";
 import Feedback from "@/models/Feedback";
+import { cappedLimit } from "@/lib/api/validate";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -18,10 +19,10 @@ async function requireAdmin() {
 }
 
 // Admin moderation reads all feedback and updates its reply/status lifecycle.
-export async function GET() {
+export async function GET(request: Request) {
   if (!(await requireAdmin())) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
   try {
-    const feedback = await Feedback.find().populate("appId", "name slug").populate("userId", "name email").sort({ createdAt: -1 }).lean();
+    const feedback = await Feedback.find().populate("appId", "name slug").populate("userId", "name email").sort({ createdAt: -1 }).limit(cappedLimit(request)).lean();
     return NextResponse.json({ data: feedback });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Database unavailable", data: [] }, { status: 503 });

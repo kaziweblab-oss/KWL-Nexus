@@ -14,4 +14,8 @@ const SubscriptionSchema = new Schema(
   { timestamps: true },
 );
 
+SubscriptionSchema.index({ userId: 1, status: 1 });
+SubscriptionSchema.index({ status: 1, endsAt: 1 });
+SubscriptionSchema.index({ status: 1, endDate: 1 });
+
 export default models.Subscription || model("Subscription", SubscriptionSchema);

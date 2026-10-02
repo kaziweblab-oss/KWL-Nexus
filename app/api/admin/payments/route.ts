@@ -9,6 +9,9 @@ import Payment from "@/models/Payment";
 import Subscription from "@/models/Subscription";
 import Plan from "@/models/Plan";
 import Notification from "@/models/Notification";
+import { logEvent } from "@/lib/observability/log";
+import { recordAudit } from "@/lib/audit/record";
+import { cappedLimit } from "@/lib/api/validate";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -19,10 +22,10 @@ async function requireAdmin() {
 }
 
 // Admins can list requests and atomically activate a plan or reject a request.
-export async function GET() {
+export async function GET(request: Request) {
   const user = await requireAdmin();
   if (!user) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-  const payments = await Payment.find().populate("userId", "name email").populate("subscriptionId").sort({ createdAt: -1 }).lean();
+  const payments = await Payment.find().populate("userId", "name email").populate("subscriptionId").sort({ createdAt: -1 }).limit(cappedLimit(request)).lean();
   return NextResponse.json({ data: payments });
 }
 
@@ -67,6 +70,8 @@ export async function PATCH(request: Request) {
         });
       }
     } catch {}
+    logEvent("payment:verify", "payment rejected", { payment: String(payment._id) });
+    await recordAudit("payment.rejected", (admin as { email?: string }).email ?? null, String(payment._id), { app: payment.appId ?? null });
     return NextResponse.json({ data: { id: payment.id, status: payment.status } });
   }
   if (body.action === "refund") {
@@ -111,6 +116,8 @@ export async function PATCH(request: Request) {
         });
       }
     } catch {}
+    logEvent("payment:verify", "payment refunded", { payment: String(payment._id) });
+    await recordAudit("payment.refunded", (admin as { email?: string }).email ?? null, String(payment._id), { app: payment.appId ?? null });
     return NextResponse.json({ data: { id: payment.id, status: payment.status } });
   }
   const plan = payment.planId ? await Plan.findById(payment.planId) : null;
@@ -147,6 +154,8 @@ export async function PATCH(request: Request) {
   } catch (entErr) {
     console.warn("Entitlement grant failed (order stays paid, retry on re-verify):", (entErr as Error)?.message);
   }
+  logEvent("payment:verify", "payment approved", { payment: String(payment._id) });
+  await recordAudit("payment.approved", (admin as { email?: string }).email ?? null, String(payment._id), { app: payment.appId ?? null });
   payment.status = "succeeded";
   payment.subscriptionId = subscription._id;
   payment.verifiedBy = admin._id;

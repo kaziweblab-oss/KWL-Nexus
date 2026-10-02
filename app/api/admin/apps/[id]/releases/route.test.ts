@@ -31,6 +31,10 @@ jest.mock("@/models/AppVersion", () => ({
     create: (...args: any[]) => (mockVersionCreate as any)(...args),
   },
 }));
+jest.mock("@/models/AuditLog", () => ({
+  __esModule: true,
+  default: { create: jest.fn().mockResolvedValue({}) },
+}));
 
 import { NextRequest } from "next/server";
 import { GET, POST } from "./route";

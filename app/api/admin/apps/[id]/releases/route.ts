@@ -69,5 +69,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     await AppVersion.updateMany({ appId: String(app._id), isCurrent: true }, { $set: { isCurrent: false } });
     await AppVersion.create({ appId: String(app._id), version: parsed.data.tagName, tag: parsed.data.tagName, notes: `Promoted from GitHub release ${parsed.data.tagName}`, changedBy: email, isCurrent: true });
   } catch {}
+  try {
+    const { recordAudit } = await import("@/lib/audit/record");
+    await recordAudit("release.promoted", email, String(app._id), { tag: parsed.data.tagName });
+  } catch {}
   return NextResponse.json({ data: { latestVersion: parsed.data.tagName } });
 }

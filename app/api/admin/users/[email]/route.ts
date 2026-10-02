@@ -101,6 +101,10 @@ export async function PATCH(request: Request, { params }: { params: { email: str
         }
       }
       user.role = newRole as "user" | "admin" | "superadmin";
+      try {
+        const { recordAudit } = await import("@/lib/audit/record");
+        await recordAudit("user.role_changed", actorEmail || null, user.email, { from: oldRole, to: newRole });
+      } catch {}
     }
     // block all
     if (typeof body.isBlocked === "boolean") {

@@ -55,6 +55,10 @@ jest.mock("@/models/Notification", () => ({
   __esModule: true,
   default: { create: jest.fn().mockResolvedValue({}) },
 }));
+jest.mock("@/models/AuditLog", () => ({
+  __esModule: true,
+  default: { create: jest.fn().mockResolvedValue({}) },
+}));
 
 import { PATCH } from "./route";
 

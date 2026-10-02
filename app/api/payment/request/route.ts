@@ -14,6 +14,7 @@ import Notification from "@/models/Notification";
 import { API_ERRORS } from "@/lib/api/errors";
 import { notifyAdmins } from "@/lib/notifications/admin";
 import { checkRateLimit, clientIp } from "@/lib/auth/rateLimit";
+import { logEvent } from "@/lib/observability/log";
 
 export const dynamic = "force-dynamic";
 
@@ -152,6 +153,7 @@ export async function POST(req: NextRequest) {
     } catch (orderErr) {
       console.warn("Order create failed (backfills on verify):", (orderErr as Error)?.message);
     }
+    logEvent("payment:request", "payment request created", { method: parsed.data.paymentMethod.toLowerCase() });
     await notifyAdmins(
       "New payment request",
       `${user.email} submitted a ${parsed.data.paymentMethod} payment request for ${plan.name} (${parsed.data.appId}). Transaction ID: ${transactionId}.`,

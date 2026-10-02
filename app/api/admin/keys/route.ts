@@ -5,6 +5,8 @@ import { isAdmin } from "@/lib/auth/admin";
 import { connectToDatabase } from "@/lib/db/connect";
 import ApiKey from "@/models/ApiKey";
 import { createApiKey, hashApiKey, encryptApiKeySecret, API_KEY_SCOPES } from "@/lib/api/auth";
+import { logEvent } from "@/lib/observability/log";
+import { recordAudit } from "@/lib/audit/record";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -38,6 +40,8 @@ export async function POST(request: Request) {
   }
   const plainKey = createApiKey();
   const record = await ApiKey.create({ userId: user._id, name, keyHash: hashApiKey(plainKey), keyEnc: encryptApiKeySecret(plainKey), appId: appScope, scopes, rateLimitPerHour: 1000 });
+  logEvent("apikey", "key created", { scope: appScope ?? "all" });
+  await recordAudit("apikey.created", user.email ?? null, String(record._id), { scope: appScope ?? "all" });
   return NextResponse.json({ data: { id: record.id, name: record.name, appId: appScope, scopes: scopes ?? null, key: plainKey, rateLimitPerHour: record.rateLimitPerHour } }, { status: 201 });
 }
 
@@ -69,8 +73,12 @@ export async function DELETE(request: Request) {
   // hard=true permanently removes the row; default only revokes (soft, keeps audit trail).
   if (url.searchParams.get("hard") === "true" || url.searchParams.get("mode") === "hard") {
     await ApiKey.deleteOne({ _id: id, userId: user._id });
+    logEvent("apikey", "key deleted", {});
+    await recordAudit("apikey.deleted", user.email ?? null, id, null);
     return NextResponse.json({ data: { deleted: true } });
   }
   await ApiKey.updateOne({ _id: id, userId: user._id }, { isRevoked: true });
+  logEvent("apikey", "key revoked", {});
+  await recordAudit("apikey.revoked", user.email ?? null, id, null);
   return NextResponse.json({ data: { revoked: true } });
 }

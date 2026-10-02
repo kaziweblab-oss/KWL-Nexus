@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db/connect";
 import Release from "@/models/Release";
 import { detectPlatform, detectArch } from "@/lib/github/client";
+import { logEvent } from "@/lib/observability/log";
+import { recordAudit } from "@/lib/audit/record";
 
 type GithubReleasePayload = { action: string; release?: { tag_name: string; name: string | null; body: string | null; published_at: string | null; prerelease?: boolean; draft?: boolean; assets: { name: string; browser_download_url: string; content_type: string; size: number }[]; target_commitish: string }; repository?: { name: string; owner: { login: string } } };
 
@@ -53,5 +55,7 @@ export async function POST(request: Request) {
       await Release.updateOne({ _id: (release as { _id: unknown })._id }, { $set: { appId: app._id } });
     }
   } catch {}
+  logEvent("webhook:release", "release synced", { owner, repo, tag });
+  await recordAudit("release.synced", null, `${owner}/${repo}@${tag}`, null);
   return NextResponse.json({ received: true, tag });
 }

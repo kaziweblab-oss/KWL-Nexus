@@ -5,6 +5,7 @@ import Notification from "@/models/Notification";
 import Plan from "@/models/Plan";
 import User from "@/models/User";
 import { apps } from "@/lib/data/apps";
+import { logEvent } from "@/lib/observability/log";
 
 // Run this endpoint from a daily scheduler to expire subscriptions consistently and notify 5 days before.
 export async function POST(request: Request) {
@@ -65,6 +66,7 @@ export async function POST(request: Request) {
     } catch {}
   }
 
+  logEvent("cron:subscriptions", "expiry run finished", { expired, notified5d: notified });
   return NextResponse.json({ data: { expired, notified5d: notified, checkedAt: now.toISOString() } });
 }
 
