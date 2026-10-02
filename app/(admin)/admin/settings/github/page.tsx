@@ -14,7 +14,7 @@ export default function GithubSettingsPage() {
         <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-ink/60 dark:text-white/60">
           <li>User clicks Download on app detail → GET /api/apps/[id]/download</li>
           <li>Server resolves PAT (DB &gt; GITHUB_TOKEN env &gt; OAuth) and fetches release via GitHub API</li>
-          <li>Returns direct downloadUrl or proxyUrl for private assets → browser auto-downloads</li>
+          <li>Returns the direct CDN downloadUrl (Nexus never proxies binaries) → browser auto-downloads</li>
           <li>Admin can browse private repos at /admin/apps/new (now includes private via PAT)</li>
         </ul>
       </div>

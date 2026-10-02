@@ -27,9 +27,19 @@ export async function GET(request: Request, { params }: { params: { id: string }
   if (!app) app = await App.findOne({ slug: id }).lean();
   if (!app) return NextResponse.json({ error: "App not found" }, { status: 404 });
 
-  const appDoc = app as { _id: unknown; slug: string; name: string; githubOwner?: string; githubRepo?: string; latestVersion?: string };
+  const appDoc = app as { _id: unknown; slug: string; name: string; githubOwner?: string; githubRepo?: string; latestVersion?: string; pricing?: string };
   const owner = appDoc.githubOwner;
   const repo = appDoc.githubRepo;
+
+  // Paid products require a live entitlement — free apps stay login-only so public
+  // distribution never breaks. (Same rule as /api/download/[appId].)
+  if ((appDoc.pricing ?? "free") !== "free") {
+    const { checkAppAccess } = await import("@/lib/entitlements/grants");
+    const User = (await import("@/models/User")).default;
+    const user = await User.findOne({ email: session.user.email }).select("_id").lean() as { _id: unknown } | null;
+    const access = user ? await checkAppAccess(user._id, [id, appDoc._id, appDoc.slug]) : { allowed: false };
+    if (!access.allowed) return NextResponse.json({ error: "Active subscription or purchase required" }, { status: 403 });
+  }
 
   // Real download counter for popular ranking (non-blocking).
   async function bumpCount() {
@@ -77,13 +87,13 @@ export async function GET(request: Request, { params }: { params: { id: string }
         // Return our proxy URL: /api/github/repos/[owner]/[repo]/releases/asset?url=...
         // For now, return direct GitHub URL with token hint
         await bumpCount();
+        // Direct CDN URL only — Nexus never proxies/streams binaries through
+        // serverless functions (no /releases/download proxy exists by design).
         return NextResponse.json({
           downloadUrl,
           version: release.tag_name,
           private: true,
-          note: "Private repo — use Authorization: Bearer <PAT> header or admin proxy",
-          // Proxy URL for auto download (server will fetch with PAT and stream)
-          proxyUrl: `/api/github/repos/${owner}/${repo}/releases/download?asset=${encodeURIComponent(asset ?? release.assets[0].name)}`,
+          note: "Private repo — use Authorization: Bearer <PAT> header for direct download",
         });
       }
     } catch {

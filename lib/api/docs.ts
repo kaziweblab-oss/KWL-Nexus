@@ -24,6 +24,7 @@ export const apiEndpoints = [
   { method: "GET", path: "/api/v1/apps", description: "V1 public catalog (published apps, paginated)." },
   { method: "GET", path: "/api/v1/apps/[slug]", description: "V1 public app metadata by slug." },
   { method: "GET", path: "/api/v1/apps/[slug]/latest", description: "V1 update manifest (?platform=&arch=&current=)." },
+  { method: "GET", path: "/api/v1/apps/[slug]/releases", description: "V1 public changelog (stable releases, notes only)." },
   { method: "GET", path: "/api/v1/apps/[slug]/entitlement", description: "V1 license check (session or scoped x-api-key)." },
 ];
 
