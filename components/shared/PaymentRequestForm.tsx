@@ -25,11 +25,12 @@ const TRX_HINT: Record<string, string> = {
 function formatTrxId(raw: string) {
   return raw.toUpperCase().replace(/\s+/g, "");
 }
-export function PaymentRequestForm({ appName, amount }: { appName: string; amount: string }) {
+export function PaymentRequestForm({ appId, planId, appName, amount }: { appId: string; planId: string; appName: string; amount: string }) {
   const { t } = useLanguage();
   const [method, setMethod] = useState("bkash");
   const [transactionId, setTransactionId] = useState("");
   const [message, setMessage] = useState("");
+  const [orderId, setOrderId] = useState<string | null>(null);
   const [methods, setMethods] = useState<Method[]>([]);
   const [loadingNumbers, setLoadingNumbers] = useState(true);
   const [touched, setTouched] = useState(false);
@@ -109,14 +110,16 @@ export function PaymentRequestForm({ appName, amount }: { appName: string; amoun
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setTouched(true);
+    setOrderId(null);
     if (!transactionId.trim()) return;
     try {
       const response = await fetch("/api/payment/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // Never send price from the client — the server prices from the plan.
         body: JSON.stringify({
-          amount: Number(amount.replace(/[^0-9.]/g, "")),
-          currency: "USD",
+          planId,
+          appId,
           paymentMethod: method,
           transactionId,
         }),
@@ -129,8 +132,9 @@ export function PaymentRequestForm({ appName, amount }: { appName: string; amoun
         data = null;
       }
       if (response.ok) {
-        const d = data as { data?: { id?: string }; paymentId?: string } | null;
+        const d = data as { data?: { id?: string }; paymentId?: string; orderId?: string | null } | null;
         const id = d?.data?.id ?? d?.paymentId;
+        setOrderId(typeof d?.orderId === "string" ? d.orderId : null);
         setMessage(id ? `${t("requestPending")} ${id}` : t("requestPending"));
       } else {
         const err = data as { error?: string } | null;
@@ -202,7 +206,16 @@ export function PaymentRequestForm({ appName, amount }: { appName: string; amoun
       </label>
       {trxError && <p className="mt-1.5 text-xs font-semibold text-red-500 dark:text-red-400">{trxError}</p>}
       <button className="mt-5 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary/90 transition">{t("submitPaymentRequest")}</button>
-      {message && <p className="mt-4 text-sm font-semibold text-[#159570] dark:text-emerald-400">{message}</p>}
+      {message && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[#159570] dark:text-emerald-400">{message}</p>
+          {orderId && (
+            <a href="/my-orders" className="mt-1 inline-block text-sm font-semibold text-primary underline dark:text-secondary">
+              {t("myOrders")}
+            </a>
+          )}
+        </div>
+      )}
     </form>
   );
 }

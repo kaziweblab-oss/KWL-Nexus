@@ -10,7 +10,10 @@ const mockPaymentSave = jest.fn().mockResolvedValue(undefined);
 const mockPaymentFind = jest.fn();
 jest.mock("@/models/Payment", () => ({
   __esModule: true,
-  default: { findById: (...args: any[]) => (mockPaymentFind as any)(...args) },
+  default: {
+    findById: (...args: any[]) => (mockPaymentFind as any)(...args),
+    find: () => ({ populate: () => ({ populate: () => ({ sort: () => ({ limit: () => ({ lean: () => Promise.resolve([{ _id: "pay1", subscriptionId: "sub1" }]) }) }) }) }) }),
+  },
 }));
 const mockSubUpdate = jest.fn().mockResolvedValue({});
 jest.mock("@/models/Subscription", () => ({
@@ -27,6 +30,7 @@ jest.mock("@/models/Entitlement", () => ({
   default: {
     updateMany: (...args: any[]) => (mockEntUpdate as any)(...args),
     create: (...args: any[]) => (mockEntCreate as any)(...args),
+    find: () => ({ select: () => ({ lean: () => Promise.resolve([{ orderId: "o1", status: "active" }]) }) }),
   },
 }));
 const mockOrderSave = jest.fn().mockResolvedValue(undefined);
@@ -38,6 +42,7 @@ jest.mock("@/models/Order", () => ({
     findOne: (...args: any[]) => (mockOrderFind as any)(...args),
     findOneAndUpdate: jest.fn().mockResolvedValue(null),
     create: (...args: any[]) => (mockOrderCreate as any)(...args),
+    find: () => ({ select: () => ({ lean: () => Promise.resolve([{ _id: "o1", paymentId: "pay1", status: "fulfilled" }]) }) }),
   },
 }));
 jest.mock("@/models/Plan", () => ({
@@ -60,7 +65,7 @@ jest.mock("@/models/AuditLog", () => ({
   default: { create: jest.fn().mockResolvedValue({}) },
 }));
 
-import { PATCH } from "./route";
+import { PATCH, GET } from "./route";
 
 function req(body: unknown) {
   return new Request("http://localhost/api/admin/payments", {
@@ -98,6 +103,13 @@ test("refund of a non-successful payment is rejected", async () => {
   const res: any = await PATCH(req({ paymentId: "507f1f77bcf86cd799439011", action: "refund" }));
   expect(res.status).toBe(409);
   expect(mockSubUpdate).not.toHaveBeenCalled();
+});
+
+test("list carries order and entitlement lifecycle status", async () => {
+  const res: any = await GET(new Request("http://localhost/api/admin/payments") as any);
+  expect(res.status).toBe(200);
+  const json = await res.json();
+  expect(json.data[0]).toMatchObject({ orderStatus: "fulfilled", entitlementStatus: "active" });
 });
 
 test("verify approves payment, activates subscription and grants entitlement", async () => {

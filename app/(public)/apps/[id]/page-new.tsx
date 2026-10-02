@@ -84,7 +84,7 @@ export default function AppDetailPage({ params }: { params: { id: string } }) {
       </div>
 
       {/* Payment Request Form */}
-      <PaymentRequestForm appName={app.name} amount={app.plans[0].price} />
+      <PaymentRequestForm appId={app.id} planId={app.plans[0].name} appName={app.name} amount={app.plans[0].price} />
 
       {/* Feedback Form */}
       <FeedbackForm appId={app.id} />

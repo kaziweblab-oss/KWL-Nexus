@@ -43,3 +43,12 @@ promote a release tag, mint a scoped API key, deliver per `docs/kwl-video-downlo
 Build fail → Vercel logs. 401 spikes → secrets/cookies (`NEXTAUTH_URL` mismatch).
 Cron silent → `?secret=` configured? Webhook ignored → signature/allowlist/tag
 (Vercel logs carry `webhook:release` JSON lines). Payments stuck → `/admin/payments`.
+
+## 8. Staging QA checklist (manual, before every production push)
+
+User: register → login → browse → app → plan → order → payment → admin approve →
+entitlement → download → `latest?current=` shows update. Admin: apps, plans, payments
+(order+entitlement columns), subscriptions, releases promote, users/roles, keys,
+branding, export. Webhook: publish a test release → synced, not auto-promoted.
+UX: 360px + desktop, light + dark, offline reload, understandable errors.
+Do not mark complete on `npm run build` alone.

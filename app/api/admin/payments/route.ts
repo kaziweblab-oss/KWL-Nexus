@@ -25,7 +25,29 @@ async function requireAdmin() {
 export async function GET(request: Request) {
   const user = await requireAdmin();
   if (!user) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-  const payments = await Payment.find().populate("userId", "name email").populate("subscriptionId").sort({ createdAt: -1 }).limit(cappedLimit(request)).lean();
+  const payments = await Payment.find().populate("userId", "name email").populate("subscriptionId").sort({ createdAt: -1 }).limit(cappedLimit(request)).lean() as Record<string, unknown>[];
+  // Lifecycle visibility: join order + entitlement status per payment (batched, no N+1).
+  try {
+    const Order = (await import("@/models/Order")).default;
+    const Entitlement = (await import("@/models/Entitlement")).default;
+    const pids = payments.map((p) => p._id);
+    const orders = (await Order.find({ paymentId: { $in: pids } }).select("paymentId status").lean()) as Array<{ _id: unknown; paymentId: unknown; status?: string }>;
+    const orderByPay = new Map(orders.map((o) => [String(o.paymentId), o]));
+    const subIds = payments.map((p) => p.subscriptionId).filter(Boolean);
+    const ents = (await Entitlement.find({ $or: [{ orderId: { $in: orders.map((o) => o._id) } }, { subscriptionId: { $in: subIds } }] }).select("orderId subscriptionId status type").lean()) as Array<{ orderId?: unknown; subscriptionId?: unknown; status?: string }>;
+    const entByOrder = new Map<string, { status?: string }>();
+    const entBySub = new Map<string, { status?: string }>();
+    for (const e of ents) {
+      if (e.orderId && !entByOrder.has(String(e.orderId))) entByOrder.set(String(e.orderId), e);
+      if (e.subscriptionId && !entBySub.has(String(e.subscriptionId))) entBySub.set(String(e.subscriptionId), e);
+    }
+    for (const p of payments) {
+      const order = orderByPay.get(String(p._id));
+      const ent = (order && entByOrder.get(String((order as { _id: unknown })._id))) || (p.subscriptionId ? entBySub.get(String(p.subscriptionId)) : undefined);
+      (p as Record<string, unknown>).orderStatus = order?.status ?? null;
+      (p as Record<string, unknown>).entitlementStatus = ent?.status ?? null;
+    }
+  } catch {}
   return NextResponse.json({ data: payments });
 }
 

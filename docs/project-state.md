@@ -48,14 +48,16 @@ Legend: CURRENT=exists, COMPLETE=done, PARTIAL=exists but gaps, BROKEN=exists bu
 | MongoDB/perf | COMPLETE (Phase 12) | Subscription query indexes; `?limit=` caps (200/500) on payments/feedbacks/apps lists (shape unchanged); users already capped | Full pagination + cursor upgrade at scale need | — | P2 done |
 | Validation/response/pagination/search | PARTIAL | `lib/api/errors.ts` Bengali map + `createErrorResponse`; `lib/api/docs.ts` OpenAPI; no shared Zod; admin lists unbounded | Inconsistent success/error shape; missing page/limit; Mongo search sufficient (no engine) | Phase 10: standard envelope, pagination | P2 |
 
-### Baseline verification (must not fake)
-- `npx tsc --noEmit` → PASS (no output)
-- `npm run lint` → PASS (warnings: exhaustive-deps, no-img-element)
-- `npm test` → PASS (18/18 suites, 56/56 tests)
-- `npm run build` → PASS (52 pages, `/api/v1/*`, `/api/order*`, `/api/entitlement*`, `/api/license*` confirmed absent in build output)
-- `.github/workflows` → MISSING (glob 0 files)
-- `AGENTS.md`, `docs/MASTER-SPEC.md`, `docs/project-state.md` (now created), `docs/DECISION-LOG.md` → were MISSING at audit start
-- Git: `f8b4ca2` HEAD, dirty: root `DEPLOYMENT.md/audit.md/deployment-*.md` deleted (moved to `docs/`), `public/sw.js/workbox-*` rebuilt
+### Phase 14 — Final E2E QA (COMPLETE, code-side 2026-10-02)
+- Found + fixed live checkout break: detail-page `PaymentRequestForm` posted without
+  `planId/appId` (always 400) — now sends plan+app identity, server prices from plan,
+  success links to `/my-orders`. Full `/payment` flow was already correct.
+- Admin payments list now carries `orderStatus` + `entitlementStatus` per row.
+- Handoff docs created: `AGENTS.md`, `docs/MASTER-SPEC.md`, `docs/DECISION-LOG.md`;
+  staging QA checklist in `docs/runbook.md` §8.
+- Verified: `tsc` PASS, `test` 40/40 suites 118/118, `lint` exit 0, `build` PASS.
+- Needs live environment (prod access): staging walkthrough per runbook §8, Atlas backup
+  verification, Vercel logs/cron/webhook/domain checks, desktop `latest` consumption.
 
 ### Phase 1 entry (P0 blockers — COMPLETE 2026-10-01, local only, no push)
 Verified: `tsc` PASS, `lint` PASS (exit 0, warnings only), `test` PASS (19/19 suites, 62/62 tests), `build` PASS.

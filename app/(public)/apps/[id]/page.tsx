@@ -47,13 +47,14 @@ export default async function AppDetailPage({ params }: { params: { id: string }
   const appId = String((dbApp._id as { toString(): string }).toString());
   const slug = dbApp.slug;
 
-  type DbPlan = { name: string; price: number; interval: string; durationDays?: number | null; refundEnabled?: boolean; refundDays?: number | null; description?: string; isActive?: boolean; features?: string[] };
-  let plans: { name: string; price: string; cadence: string; refundEnabled?: boolean; refundDays?: number | null; description: string; featured?: boolean; features: string[] }[] = [];
+  type DbPlan = { _id: unknown; name: string; price: number; interval: string; durationDays?: number | null; refundEnabled?: boolean; refundDays?: number | null; description?: string; isActive?: boolean; features?: string[] };
+  let plans: { id: string; name: string; price: string; cadence: string; refundEnabled?: boolean; refundDays?: number | null; description: string; featured?: boolean; features: string[] }[] = [];
   try {
     const dbPlans = await Plan.find({ $or: [{ appId }, { appId: slug }, { appSlug: slug }] }).lean<DbPlan[]>();
     plans = dbPlans
       .filter((p) => p.isActive !== false)
       .map((p) => ({
+        id: String(p._id),
         name: p.name,
         price: p.price === 0 ? "Free" : `$${p.price}`,
         cadence: p.interval === "lifetime" ? " one-time" : p.interval === "custom" ? ` / ${p.durationDays ?? "custom"} days` : `/${p.interval}`,
@@ -133,7 +134,7 @@ export default async function AppDetailPage({ params }: { params: { id: string }
         previewVideoUrl={dbApp.previewVideoUrl || (dbApp.tutorial?.isActive === false ? undefined : dbApp.tutorial?.videoUrl)}
       />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        {plans.length > 0 && <PaymentRequestForm appName={dbApp.name} amount={plans[0]?.price ?? "Free"} />}
+        {plans.length > 0 && plans[0]?.id && <PaymentRequestForm appId={slug} planId={plans[0].id} appName={dbApp.name} amount={plans[0]?.price ?? "Free"} />}
         <FeedbackForm appId={slug} />
       </div>
     </>
